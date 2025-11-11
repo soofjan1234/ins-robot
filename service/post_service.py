@@ -5,7 +5,7 @@ import time
 
 class InstagramPostService:
     """
-    Instagram发布服务类，提供创建和发布Instagram帖子的功能
+    Instagram发布服务类，提供创建、发布和分享Instagram帖子的功能
     """
     
     def __init__(self, driver):
@@ -184,24 +184,64 @@ class InstagramPostService:
         except Exception as e:
             print(f"[发布服务] 点击继续按钮过程中发生错误: {e}")
             return False
+    
+    def click_share_button(self):
+        """
+        点击分享按钮
+        基于a.txt中的HTML结构实现
+        
+        Returns:
+            bool: 点击是否成功
+        """
+        print("[发布服务] 尝试点击分享按钮...")
+        
+        try:
+            # 使用a.txt中提供的HTML结构来定位分享按钮
+            # 先尝试通过最内层div的class和内容"分享"定位
+            print("[发布服务] 尝试通过内层div和文本'分享'定位")
+            share_button = WebDriverWait(self.driver, 15).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, "//div[contains(@class, 'x1i10hfl') and contains(text(), '分享')]")
+                )
+            )
+            
+            # 使用JavaScript点击以避免元素被拦截的问题
+            self.driver.execute_script("arguments[0].click();", share_button)
+            print("[发布服务] 成功点击分享按钮")
+            return True
+        except Exception as e:
+            print(f"[发布服务] 点击分享按钮失败: {e}")
+            
+            # 备用策略: 尝试通过外层div的特定class定位
+            try:
+                print("[发布服务] 尝试备用策略: 通过外层div的class定位")
+                share_container = WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, "//div[contains(@class, 'html-div') and contains(@class, 'xdj266r')]")
+                    )
+                )
+                # 查找其中的button元素
+                share_button = share_container.find_element(By.XPATH, ".//div[@role='button']")
+                self.driver.execute_script("arguments[0].click();", share_button)
+                print("[发布服务] 备用策略成功: 点击分享按钮")
+                return True
+            except Exception as e2:
+                print(f"[发布服务] 备用策略也失败: {e2}")
+                return False
 
 # 测试代码
 if __name__ == "__main__":
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
-    from selenium.webdriver.chrome.service import Service
-    from webdriver_manager.chrome import ChromeDriverManager
-    from login import InstagramLoginService
+    from service.login import InstagramLoginService, get_chrome_options, create_webdriver
+    import os
     
-    # 创建Chrome浏览器实例
-    options = Options()
-    options.add_argument("--start-maximized")
+    driver = None
     
     try:
-        # 初始化浏览器
-        print("[测试] 正在初始化浏览器...")
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=options)
+        # 使用配置化的函数获取浏览器选项
+        options = get_chrome_options()
+        
+        # 使用配置化的函数初始化浏览器
+        driver = create_webdriver(options)
         
         # 先登录
         print("[测试] 登录Instagram...")
@@ -218,13 +258,42 @@ if __name__ == "__main__":
             
             if create_success:
                 # 等待上传界面
-                post_service.wait_for_upload_interface()
+                upload_ready = post_service.wait_for_upload_interface()
+                
+                if upload_ready:
+                    # 尝试上传测试图片（假设在项目根目录有1.jpg）
+                    test_image_path = os.path.abspath("../1.jpg")
+                    if os.path.exists(test_image_path):
+                        print(f"[测试] 尝试上传测试图片: {test_image_path}")
+                        upload_success = post_service.upload_media(test_image_path)
+                        
+                        if upload_success:
+                            # 点击继续按钮
+                            print("[测试] 点击继续按钮...")
+                            next_success = post_service.go_to_next_step()
+                            
+                            if next_success:
+                                # 等待编辑页面加载
+                                print("[测试] 等待编辑页面加载...")
+                                time.sleep(5)
+                                
+                                # 测试分享功能
+                                print("[测试] 尝试点击分享按钮...")
+                                share_success = post_service.click_share_button()
+                                
+                                if share_success:
+                                    print("[测试] 分享功能测试成功!")
+                    else:
+                        print(f"[测试] 测试图片不存在: {test_image_path}")
                 
                 # 保持浏览器打开一段时间以便观察
                 print("[测试] 浏览器将保持打开30秒...")
                 time.sleep(30)
         
+    except Exception as e:
+        print(f"[测试] 测试过程中发生错误: {e}")
     finally:
         # 关闭浏览器
         print("[测试] 关闭浏览器")
-        driver.quit()
+        if driver:
+            driver.quit()

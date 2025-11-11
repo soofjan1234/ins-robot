@@ -1,15 +1,11 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
 import os
 import time
 
-# 导入服务模块
-from service.login import InstagramLoginService
+# 从login模块导入封装的浏览器配置函数和服务
+from service.login import InstagramLoginService, get_chrome_options, create_webdriver
 from service.post_service import InstagramPostService
 
 def read_file_content(file_path):
@@ -95,18 +91,10 @@ def test_instagram_upload():
     """
     driver = None
     try:
-        # 1. 初始化浏览器
+        # 1. 初始化浏览器 - 使用封装的配置函数
         print("[测试] 正在初始化浏览器...")
-        options = Options()
-        options.add_argument("--start-maximized")
-        # ✅ 设置固定的用户数据目录
-        options.add_argument(r"--user-data-dir=C:\Users\hou\AppData\Local\Google\selenium_profile")
-        # ✅ 可选：给它取个独立的 profile 名称（避免与系统 Chrome 冲突）
-        options.add_argument(r"--profile-directory=Default")
-        
-        # 使用webdriver-manager自动管理ChromeDriver
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=options)
+        options = get_chrome_options(headless=False)
+        driver = create_webdriver(options)
         
         # 2. 登录Instagram
         print("\n[测试] 开始登录Instagram...")

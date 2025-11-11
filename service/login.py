@@ -4,6 +4,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 from dotenv import load_dotenv
 import os
+import platform
 
 class InstagramLoginService:
     """
@@ -147,34 +148,100 @@ class InstagramLoginService:
         return False
 
 
-# 如果直接运行此文件，则进行简单的登录测试
-if __name__ == "__main__":
-    from selenium import webdriver
+def get_chrome_options(headless=False, profile_name="Default"):
+    """
+    配置Chrome浏览器选项，提供跨平台兼容的浏览器配置
+    
+    Args:
+        headless: 是否启用无头模式
+        profile_name: Chrome配置文件名称
+        
+    Returns:
+        Options: 配置好的ChromeOptions实例
+    """
     from selenium.webdriver.chrome.options import Options
-    from selenium.webdriver.chrome.service import Service
-    from webdriver_manager.chrome import ChromeDriverManager
     
     # 创建Chrome浏览器实例
     options = Options()
     options.add_argument("--start-maximized")
     
-    # ✅ 设置固定的用户数据目录 
-    options.add_argument(r"--user-data-dir=C:\Users\hou\AppData\Local\Google\selenium_profile") 
+    # 设置无头模式（如果需要）
+    if headless:
+        options.add_argument("--headless")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
     
-    # ✅ 可选：给它取个独立的 profile 名称（避免与系统 Chrome 冲突） 
-    options.add_argument(r"--profile-directory=Default")
+    # 根据不同操作系统设置不同的Chrome配置文件路径
+    system = platform.system()
+    user_home = os.path.expanduser("~")
+    
+    if system == "Windows":
+        # Windows系统路径
+        chrome_profile_path = os.path.join("C:", "Users", "hou", "AppData", "Local", "Google", "selenium_profile")
+        print(f"[浏览器配置] Windows系统，使用Chrome配置路径: {chrome_profile_path}")
+    elif system == "Darwin":  # macOS
+        # macOS系统路径
+        chrome_profile_path = os.path.join(user_home, "Library", "Application Support", "Google", "Chrome", "selenium_profile")
+        print(f"[浏览器配置] macOS系统，使用Chrome配置路径: {chrome_profile_path}")
+    else:
+        # 其他系统（如Linux）的默认路径
+        chrome_profile_path = os.path.join(user_home, ".config", "google-chrome", "selenium_profile")
+        print(f"[浏览器配置] {system}系统，使用Chrome配置路径: {chrome_profile_path}")
+    
+    # 确保配置文件目录存在
+    os.makedirs(chrome_profile_path, exist_ok=True)
+    
+    # 设置用户数据目录
+    options.add_argument(f"--user-data-dir={chrome_profile_path}") 
+    
+    # 设置独立的profile名称（避免与系统Chrome冲突）
+    options.add_argument(f"--profile-directory={profile_name}")
+    
+    return options
+
+def create_webdriver(options=None):
+    """
+    创建并初始化Chrome WebDriver
+    
+    Args:
+        options: ChromeOptions实例，如果不提供则自动创建
+        
+    Returns:
+        WebDriver: 初始化好的Chrome WebDriver实例
+    """
+    from selenium import webdriver
+    from selenium.webdriver.chrome.service import Service
+    from webdriver_manager.chrome import ChromeDriverManager
+    
+    # 如果没有提供options，创建默认的
+    if options is None:
+        options = get_chrome_options()
     
     try:
         # 使用webdriver-manager自动管理ChromeDriver
-        print("[测试] 正在初始化浏览器...")
+        print("[浏览器初始化] 正在初始化浏览器...")
         try:
             service = Service(ChromeDriverManager().install())
             driver = webdriver.Chrome(service=service, options=options)
         except Exception as e:
-            print(f"[测试] 自动下载ChromeDriver失败: {e}")
-            print("[测试] 尝试使用系统已安装的ChromeDriver...")
+            print(f"[浏览器初始化] 自动下载ChromeDriver失败: {e}")
+            print("[浏览器初始化] 尝试使用系统已安装的ChromeDriver...")
             # 尝试不指定service，让Selenium自动查找系统PATH中的ChromeDriver
             driver = webdriver.Chrome(options=options)
+        
+        return driver
+    except Exception as e:
+        print(f"[浏览器初始化] 创建WebDriver失败: {e}")
+        raise
+
+# 如果直接运行此文件，则进行简单的登录测试
+if __name__ == "__main__":
+    try:
+        # 使用配置化的函数获取浏览器选项
+        options = get_chrome_options()
+        
+        # 使用配置化的函数创建WebDriver
+        driver = create_webdriver(options)
         
         # 创建登录服务实例并尝试登录
         login_service = InstagramLoginService()
@@ -184,6 +251,8 @@ if __name__ == "__main__":
         print("[测试] 浏览器将保持打开30秒...")
         time.sleep(30)
         
+    except Exception as e:
+        print(f"[测试] 测试过程中发生错误: {e}")
     finally:
         # 关闭浏览器
         print("[测试] 关闭浏览器")
