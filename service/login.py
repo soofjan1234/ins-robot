@@ -177,7 +177,7 @@ def get_chrome_options(headless=False, profile_name="Default"):
     
     if system == "Windows":
         # Windows系统路径
-        chrome_profile_path = os.path.join("C:", "Users", "hou", "AppData", "Local", "Google", "selenium_profile")
+        chrome_profile_path = "C:\\Users\\hou\\AppData\\Local\\Google\\selenium_profile"
         print(f"[浏览器配置] Windows系统，使用Chrome配置路径: {chrome_profile_path}")
     elif system == "Darwin":  # macOS
         # macOS系统路径

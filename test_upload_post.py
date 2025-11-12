@@ -6,7 +6,8 @@ import time
 
 # 从login模块导入封装的浏览器配置函数和服务
 from service.login import InstagramLoginService, get_chrome_options, create_webdriver
-from service.post_service import InstagramPostService
+from service.media_upload_service import MediaUploadService
+from service.text_processing_service import TextProcessingService
 
 def read_file_content(file_path):
     """
@@ -109,12 +110,13 @@ def test_instagram_upload():
         print("[测试] 登录成功，等待页面完全加载...")
         time.sleep(5)
         
-        # 3. 初始化发布服务
-        post_service = InstagramPostService(driver)
+        # 3. 初始化服务类
+        media_service = MediaUploadService(driver)
+        text_service = TextProcessingService(driver)
         
         # 4. 点击创建帖子按钮
         print("\n[测试] 尝试点击创建帖子按钮...")
-        create_success = post_service.click_create_post_button()
+        create_success = media_service.click_create_post_button()
         
         if not create_success:
             print("[测试] 点击创建按钮失败，退出测试")
@@ -122,7 +124,7 @@ def test_instagram_upload():
         
         # 5. 等待上传界面加载
         print("[测试] 创建按钮点击成功，等待上传界面...")
-        upload_interface_ready = post_service.wait_for_upload_interface()
+        upload_interface_ready = media_service.wait_for_upload_interface()
         
         if not upload_interface_ready:
             print("[测试警告] 上传界面检测失败，但将继续尝试上传")
@@ -130,7 +132,7 @@ def test_instagram_upload():
         # 6. 上传1.jpg文件
         print("\n[测试] 尝试上传1.jpg文件...")
         # 获取1.jpg的绝对路径
-        file_path = os.path.abspath("1.jpg")
+        file_path = os.path.abspath("data/1.jpg")
         print(f"[测试] 上传文件路径: {file_path}")
         
         # 检查文件是否存在
@@ -138,29 +140,37 @@ def test_instagram_upload():
             print(f"[测试] 错误: 文件 {file_path} 不存在")
             return False
         
-        upload_success = post_service.upload_media(file_path)
+        upload_success = media_service.upload_media(file_path)
         
         if upload_success:
             print("[测试] 文件上传成功！")
             # 点击下一步按钮
             print("[测试] 点击下一步按钮...")
-            post_service.go_to_next_step()
+            media_service.go_to_next_step()
 
             # 点击下一步按钮
             print("\n[测试] 继续点击下一步按钮...")
-            post_service.go_to_next_step()
+            media_service.go_to_next_step()
 
             # 读取1.txt文件内容
             print("\n[测试] 开始处理文本内容...")
-            file_content = read_file_content("1.txt")
+            file_content = read_file_content("data/1.txt")
             
             if file_content:
                 # 将文件内容填入输入框
                 print("[测试] 正在将文件内容填入输入框...")
-                fill_input_box(driver, file_content)
+                # 等待文本框准备就绪
+                text_service.wait_for_textarea_ready()
+                # 处理文本内容（包括标签）
+                processed_content = text_service.process_hashtags(file_content)
+                # 填充文本框
+                text_service.fill_caption_textarea(processed_content)
             else:
                 print("[测试] 未获取到文件内容，跳过输入框填充")
             
+            media_service.click_share_button()
+            print("[测试] 点击分享按钮...")
+
             # 保持浏览器打开一段时间以便观察
             print("\n[测试] 测试完成！浏览器将保持打开60秒，您可以观察结果...")
             time.sleep(60)

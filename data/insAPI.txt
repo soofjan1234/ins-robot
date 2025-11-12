@@ -1,0 +1,227 @@
+1. 身份验证和授权
+端点授权通过权限和功能进行管理。在您的应用能够使用端点访问应用用户的 Instagram 专业帐户数据之前，您必须先向应用用户请求这些端点所需的所有权限。您可以通过实现 Instagram 企业登录或 Facebook 企业登录来向应用用户请求权限。如果您实现 Instagram 企业登录，您的应用用户将使用其 Instagram 凭据登录。如果您实现 Facebook 企业登录，您的应用用户将使用其 Facebook 凭据登录。
+
+要启动登录流程，应用用户点击您的嵌入 URL。Meta会打开一个授权窗口，用户需在此授予您的应用所需的权限。之后，Meta 会将用户重定向到您应用的重定向 URI，并向您的应用发送一个授权码。此授权码有效期为一小时。
+
+接下来，使用授权码交换一个有效期较短的访问令牌、您的应用用户 ID 以及您的应用用户授予的权限列表。此访问令牌有效期为一小时。访问令牌遵循 OAuth 2.0 协议，具有应用级效力（每个应用和应用用户独一无二），并且是大多数 API 调用所必需的。使用 Instagram 企业登录的应用会收到 Instagram 用户访问令牌，而使用 Facebook 企业登录的应用会收到 Facebook 用户访问令牌。
+
+在短期访问令牌过期之前，您的应用会将其交换为长期访问令牌。该访问令牌有效期为60 天，并且可以在过期前刷新。
+
+获得权限并收到访问令牌后，您的应用即可查询端点以访问用户数据。请注意，权限仅允许访问授予该权限的应用用户创建的数据。虽然有一些端点允许应用访问非应用用户创建的数据，但可访问的数据范围有限且公开。
+
+如果您的应用仅服务于您的 Instagram 专业帐户或您管理的帐户，则无需实现登录流程。但是，您需要在应用控制面板中配置企业登录设置，以获取 Instagram 应用 ID 和 Instagram 应用密钥，以及用于 API 调用的长期访问令牌。
+
+2. 本指南将向您展示如何使用 Instagram 平台在 Instagram 专业帐户上发布单张图片、视频、短视频（单媒体帖子）或包含多张图片和视频的帖子（轮播帖子）。
+
+2025年3月24日，我们在端点alt_text上引入了图片帖子的新字段/<INSTAGRAM_PROFESSIONAL_ACCOUNT_ID>/media。Reels 和 Stories 暂不支持。
+
+要求
+本指南假设您已阅读Instagram 平台概述，并实现了使用此 API 所需的组件，例如 Meta 登录流程和用于接收通知的 webhook 服务器。
+
+公共服务器上的媒体
+我们在发布尝试中使用 cURL 媒体，因此媒体在尝试发布时必须托管在可公开访问的服务器上。
+
+页面发布授权
+与需要页面发布授权(PPA) 的页面关联的 Instagram 专业帐户，在完成 PPA 之前无法发布内容。
+
+应用用户可能能够在最初不需要 PPA（个人主页认证）但之后需要 PPA 的页面上执行任务。在这种情况下，应用用户必须完成 PPA 才能在其 Instagram 专业帐户上发布内容。由于您无法确定应用用户的页面是否需要 PPA，我们建议您建议应用用户提前完成 PPA。
+
+您需要以下物品：
+
+Instagram API 和 Instagram 登录	Instagram API 与 Facebook 登录
+访问级别
+
+高级访问权限
+标准访问
+高级访问权限
+标准访问
+访问令牌
+
+Instagram 用户访问令牌
+Facebook 页面访问令牌
+主机 URL
+
+graph.instagram.com
+
+graph.facebook.com rupload.facebook.com（用于断点续传视频上传）
+
+登录类型
+
+Instagram 企业登录
+
+Facebook 企业版登录
+
+权限	
+instagram_business_basic
+instagram_business_content_publish
+instagram_basic
+instagram_content_publish
+pages_read_engagement
+如果应用用户通过商务管理平台被授予了与其 Instagram 专业帐户关联的页面上的角色，则您的应用还需要：
+
+ads_management
+ads_read
+网络钩子
+
+终点
+/<IG_ID>/media— 创建媒体容器并上传媒体
+upload_type=resumable— 创建可恢复的上传会话，以便在网络频繁中断或传输故障的区域上传大型视频。仅适用于已集成 Facebook 企业登录功能的应用。
+/<IG_ID>/media_publish— 使用媒体容器发布上传的媒体。
+/<IG_CONTAINER_ID>?fields=status_code— 检查媒体容器发布资格和状态。
+/<IG_ID>/content_publishing_limit— 检查应用用户当前的发布速率限制使用情况。
+
+POST https://rupload.facebook.com/ig-api-upload/<IG_MEDIA_CONTAINER_ID>— 将视频上传到 Meta 服务器
+
+GET /<IG_MEDIA_CONTAINER_ID>?fields=status_code— 检查视频的发布资格和状态
+
+HTML URL 编码故障排除
+部分参数支持列表/字典格式。
+某些字符需要编码成可通过互联网传输的格式。例如：`<?>` 编码为 `<?>`，`<?>` 编码为 `<?>`，`<?>`user_tags=[{username:’ig_user_name’}]编码user_tags=%5B%7Busername:ig_user_name%7D%5D为[`<?>`。%5B更多{转换%7B信息，请参阅 HTML URL 编码标准。
+局限性
+目前仅支持JPEG图像格式。不支持MPO和JPS等扩展JPEG格式。
+不支持购物标签。
+不支持品牌内容标签。
+不支持筛选功能。
+有关其他限制，请参阅每个端点的参考文档。
+
+速率限制
+Instagram 账号在 24 小时内通过 API 发布的帖子数量上限为 100 条。轮播图算作一条帖子。此限制POST /<IG_ID>/media_publish在尝试发布媒体容器时通过 API 接口强制执行。我们建议您的应用也强制执行发布频率限制，尤其是在您的应用允许用户安排帖子在未来发布的情况下。
+
+要查看 Instagram 专业帐户当前的速率限制使用情况，请查询GET /<IG_ID>/content_publishing_limit端点。
+
+创建一个容器
+要发布媒体对象，它必须位于一个容器中。要创建媒体容器并上传媒体文件，请POST向/<IG_ID>/media端点发送带有以下参数的请求：
+
+access_token– 设置为您的应用用户的访问令牌
+image_url或者video_url——设置为图片或视频的路径。我们将使用传入的 URL 通过 cURL 访问您的图片，因此图片必须位于公共服务器上。
+media_type— 如果容器将用于视频，请设置为VIDEO、REELS或STORIES。
+is_carousel_item– 如果媒体将成为轮播的一部分，则设定为true
+upload_typeresumable–如果要为大型视频文件创建可恢复上传会话，请设置为 true
+请访问Instagram 用户媒体端点参考文档，了解更多可选参数。
+
+
+示例请求
+格式已调整，便于阅读。
+
+curl -X POST "https:// <HOST_URL> / <LATEST_API_VERSION> / <IG_ID> /media"
+     -H "Content-Type: application/json"
+     -H "授权：持有者<ACCESS_TOKEN> "
+     -d'{
+           "image_url":"https://www.example.com/images/bronz-fonz.jpg"
+         }'
+成功后，您的应用将收到一个包含 Instagram 容器 ID 的 JSON 响应。
+
+{ "id" : "<IG_CONTAINER_ID>" }
+     
+创建一个旋转容器
+要在单个帖子（即轮播帖子）中发布最多 10 张图片、视频或两者的组合，您必须创建一个轮播容器。此轮播容器将包含所有媒体容器的列表。
+
+要创建轮播容器，请POST向/<IG_ID>/media端点发送带有以下参数的请求：
+
+media_type— 设置为CAROUSEL. 表示容器用于旋转木马。
+children— 以逗号分隔的列表，最多包含 10 个应出现在已发布轮播图中的图像和视频的容器 ID。
+
+局限性
+轮播图最多只能包含 10 张图片、视频或两者的组合。
+轮播图中的图片均根据轮播图中的第一张图片进行裁剪，默认宽高比为 1:1。
+每个账号在24小时内最多只能发布50篇文章。发布轮播图算作一篇文章。
+示例请求
+格式已调整，便于阅读。
+
+curl -X POST "https://graph.instagram.com/ v24.0/90010177253934/media" -H " Content-Type: application/json" -d ' {  
+      
+     
+           “caption”:”水果糖果”
+           "media_type":"旋转木马"
+           “子项”："<IG_CONTAINER_ID_1>,<IG_CONTAINER_ID_2>,<IG_CONTAINER_ID_3>"
+         }'
+成功后，您的应用将收到一个包含 Instagram 轮播容器 ID 的 JSON 响应。
+
+{ "id" : "<IG_CAROUSEL_CONTAINER_ID>" }
+    
+可恢复上传会话
+如果您在步骤 1 中创建了用于可恢复视频上传的容器，则需要先上传视频才能发布。
+
+大多数 API 调用使用graph.facebook.comhost，但是，上传 Reels 视频的调用使用 host rupload.facebook.com。
+
+上传视频文件支持以下文件来源：
+
+位于您计算机上的文件
+托管在面向公众的服务器（例如 CDN）上的文件
+要启动上传会话，请POST向主机/<IG_MEDIA_CONTAINER_ID上的端点发送rupload.facebook.com带有以下参数的请求：
+
+access_token
+示例请求上传本地视频文件
+ig-container-id从可恢复上传会话调用返回后，上传视频。
+
+请确保主机是rupload.facebook.com。
+所有用户media_type上传视频的流程都相同。
+ig-container-id这是从可恢复上传会话调用中返回的 ID。
+access-token与之前的步骤中使用的是同一个。
+offset通常情况下，设置为上传的第一个字节0。
+file_size设置为文件大小（以字节为单位）。
+Your_file_local_path设置为本地文件的文件路径，例如，如果从macOS 上的“下载”文件夹上传文件，则路径为@Downloads/example.mov。
+curl -X POST "https://rupload.facebook.com/ig-api-upload/<API_VERSION>/<IG_MEDIA_CONTAINER_ID>`" \
+      -H "Authorization: OAuth <ACCESS_TOKEN>" \
+      -H " offset: 0" \
+      -H " file_size: Your_file_size_in_bytes" \
+      --data - binary " @my_video_file.mp4 "
+示例请求上传公开托管的视频
+curl -X POST "https://rupload.facebook.com/ig-api-upload/<API_VERSION>/<IG_MEDIA_CONTAINER_ID>`" \
+      -H " Authorization: OAuth <ACCESS_TOKEN>" \
+      -H " file_url: https://example_hosted_video.com"
+样本响应
+// 成功响应消息{ "success" : true , "message" : "上传成功。" }
+
+  
+  
+
+
+// 失败响应消息{ "debug_info" :{ "retriable" : false , "type" : "ProcessingFailedError" , "message" : "{\"success\":false,\"error\":{\"message\":\"unauthorized user request\"}}" } }
+
+  
+    
+    
+    
+  
+发布容器
+发布媒体内容，
+
+POST向端点发送/<IG_ID>/media_publish带有以下参数的请求：
+
+creation_id设置为容器 ID，可以是单个媒体容器，也可以是轮播容器。
+示例请求
+格式已调整，便于阅读。
+
+    
+curl -X POST "https:// <HOST_URL> / <LATEST_API_VERSION> / <IG_ID> /media_publish"
+     -H "Content-Type: application/json"
+     -H "授权：持有者<ACCESS_TOKEN> "     
+     -d'{
+           "creation_id":" <IG_CONTAINER_ID> "
+         }'
+成功后，您的应用将收到一个包含 Instagram 媒体 ID 的 JSON 响应。
+
+{ "id" : "<IG_MEDIA_ID>" }
+   
+Reels 帖子
+Reels 是短视频，显示在Instagram 应用的Reels标签页中。要发布 Reels，请创建一个视频容器，并在容器中添加 ` media_type=REELS<container>` 参数以及视频路径video_url。
+
+如果您发布了一个视频片段，然后请求其media_type字段，则返回的值为空VIDEO。要确定已发布的视频是否已被指定为视频片段，请media_product_type改为请求其字段。
+
+您可以使用GitHub 上的代码示例 (insta_reels_publishing_api_sample)来学习如何将 Reels 发布到 Instagram。
+
+故事帖子
+要发布视频片段，请为媒体对象创建一个容器，并包含media_type设置为 的参数STORIES。
+
+如果您发布了一篇报道，然后请求其media_type字段，则返回的值将为空IMAGE/VIDEO。要确定已发布的图片/视频是否为报道，请media_product_type改为请求其字段。
+
+故障排除
+如果您能够创建视频容器，但POST /<IG_ID>/media_publish端点未返回已发布媒体 ID，则可以通过查询GET /<IG_CONTAINER_ID>?fields=status_code端点来获取容器的发布状态。此端点将返回以下值之一：
+
+EXPIRED— 该容器未在 24 小时内发布，已过期。
+ERROR— 容器未能完成发布过程。
+FINISHED— 容器及其媒体对象已准备好发布。
+IN_PROGRESS— 该容器仍在发布过程中。
+PUBLISHED— 容器的媒体对象已发布。
+我们建议每分钟查询一次容器状态，每次查询时间不超过 5 分钟。
