@@ -5,9 +5,9 @@ import os
 import time
 
 # 从login模块导入封装的浏览器配置函数和服务
-from service.login import InstagramLoginService, get_chrome_options, create_webdriver
-from service.media_upload_service import MediaUploadService
-from service.text_processing_service import TextProcessingService
+from ins_robot.login import InstagramLoginService, get_chrome_options, create_webdriver
+from ins_robot.media_upload_service import MediaUploadService
+from ins_robot.text_processing_service import TextProcessingService
 
 def read_file_content(file_path):
     """

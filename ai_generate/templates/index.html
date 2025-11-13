@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram AI图片生成助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="/static/js/tailwind.config.js"></script>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body class="font-sans min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fa fa-instagram text-primary text-3xl mr-3"></i>
+                    <span class="text-xl font-bold text-dark">AI图片生成助手</span>
+                </div>
+                <div class="flex items-center">
+                    <button id="batchModeToggle" class="px-4 py-2 text-secondary font-medium hover:text-primary transition-all-300">
+                        <i class="fa fa-cubes mr-2"></i>批量模式
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 单图生成模式 -->
+        <div id="singleMode" class="space-y-8">
+            <!-- 输入区域 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-dark mb-4">生成你的Instagram图片</h2>
+                    
+                    <!-- 文案输入框 -->
+                    <div class="mb-6">
+                        <label for="prompt" class="block text-sm font-medium text-gray-700 mb-2">图片描述（提示词）</label>
+                        <textarea 
+                            id="prompt" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg text-area-focus outline-none resize-none h-32"
+                            placeholder="输入你想要生成的图片描述，例如：'一只可爱的小猫在阳光下睡觉'"
+                        ></textarea>
+                        <p class="mt-2 text-xs text-gray-500">越详细的描述将生成越符合你期望的图片</p>
+                    </div>
+                    
+                    <!-- 图片上传区域 -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">上传参考图片（可选）</label>
+                        <div id="uploadArea" class="upload-area p-8 text-center rounded-lg">
+                            <input type="file" id="imageUpload" class="hidden" accept="image/*" />
+                            <i class="fa fa-cloud-upload text-5xl text-gray-400 mb-3"></i>
+                            <p class="text-gray-500 mb-2">拖放图片到此处，或</p>
+                            <button type="button" id="selectImageBtn" class="text-primary font-medium hover:underline">
+                                选择图片文件
+                            </button>
+                            <p class="mt-2 text-xs text-gray-500">支持 JPG, PNG, WEBP 格式，最大 10MB</p>
+                        </div>
+                        <div id="previewContainer" class="mt-4 hidden">
+                            <img id="imagePreview" class="max-w-full h-auto rounded-lg border border-gray-200" />
+                            <button id="removeImageBtn" class="mt-2 text-red-500 text-sm hover:text-red-700">
+                                <i class="fa fa-trash mr-1"></i>移除图片
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 生成按钮 -->
+                    <div class="flex justify-center">
+                        <button id="generateBtn" class="btn-primary text-white px-8 py-3 rounded-lg font-medium flex items-center">
+                            <i class="fa fa-magic mr-2"></i>
+                            生成图片
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 结果显示区域 -->
+            <div id="resultArea" class="hidden">
+                <div class="bg-white rounded-xl shadow-md overflow-hidden card">
+                    <div class="p-6">
+                        <h2 class="text-xl font-semibold text-dark mb-4">生成结果</h2>
+                        
+                        <div class="flex flex-col items-center">
+                            <!-- 加载中状态 -->
+                            <div id="loadingState" class="hidden py-10 text-center">
+                                <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+                                <p class="text-gray-600">正在生成图片，请稍候...</p>
+                            </div>
+                            
+                            <!-- 错误状态 -->
+                            <div id="errorState" class="hidden py-10 text-center">
+                                <i class="fa fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
+                                <p id="errorMessage" class="text-red-600 mb-2">生成失败，请重试</p>
+                                <button id="retryBtn" class="text-primary font-medium hover:underline">重新生成</button>
+                            </div>
+                            
+                            <!-- 图片结果 -->
+                            <div id="imageResultContainer" class="hidden w-full max-w-md">
+                                <img id="generatedImage" class="w-full h-auto rounded-lg shadow-sm" />
+                                
+                                <div class="flex justify-between mt-4">
+                                    <button id="downloadBtn" class="btn-secondary text-white px-4 py-2 rounded-lg font-medium flex items-center">
+                                        <i class="fa fa-download mr-2"></i>
+                                        下载图片
+                                    </button>
+                                    <button id="regenerateBtn" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium flex items-center">
+                                        <i class="fa fa-refresh mr-2"></i>
+                                        重新生成
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 批量生成模式 -->
+        <div id="batchMode" class="hidden space-y-8">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-dark mb-4">批量生成图片（同一文案）</h2>
+                    
+                    <!-- 统一文案输入 -->
+                    <div class="mb-6">
+                        <label for="batchPrompt" class="block text-sm font-medium text-gray-700 mb-2">图片描述（所有生成图片将使用相同描述）</label>
+                        <textarea 
+                            id="batchPrompt" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg text-area-focus outline-none resize-none h-32"
+                            placeholder="输入你想要生成的图片描述，例如：'一只可爱的小猫在阳光下睡觉'"
+                        ></textarea>
+                        <p class="mt-2 text-xs text-gray-500">越详细的描述将生成越符合你期望的图片</p>
+                    </div>
+                    
+                    <!-- 图片数量选择 -->
+                    <div class="mb-6">
+                        <label for="imageCount" class="block text-sm font-medium text-gray-700 mb-2">生成图片数量</label>
+                        <div class="flex items-center">
+                            <button id="decreaseCountBtn" class="w-10 h-10 border border-gray-300 rounded-l-lg flex items-center justify-center hover:bg-gray-100">
+                                <i class="fa fa-minus text-gray-600"></i>
+                            </button>
+                            <input 
+                                id="imageCount" 
+                                type="number" 
+                                min="1" 
+                                max="10" 
+                                value="4" 
+                                class="w-20 h-10 border-t border-b border-gray-300 text-center text-lg font-medium focus:outline-none"
+                            />
+                            <button id="increaseCountBtn" class="w-10 h-10 border border-gray-300 rounded-r-lg flex items-center justify-center hover:bg-gray-100">
+                                <i class="fa fa-plus text-gray-600"></i>
+                            </button>
+                            <p class="ml-4 text-sm text-gray-500">最多可生成10张图片</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center mt-6">
+                        <button id="batchGenerateBtn" class="btn-primary text-white px-8 py-3 rounded-lg font-medium flex items-center">
+                            <i class="fa fa-magic mr-2"></i>
+                            批量生成图片
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 批量结果显示区域 -->
+            <div id="batchResultArea" class="hidden">
+                <div class="bg-white rounded-xl shadow-md overflow-hidden card">
+                    <div class="p-6">
+                        <h2 class="text-xl font-semibold text-dark mb-4">批量生成结果</h2>
+                        
+                        <!-- 批量加载中状态 -->
+                        <div id="batchLoadingState" class="hidden py-10 text-center">
+                            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+                            <p class="text-gray-600">正在批量生成图片，请稍候...</p>
+                        </div>
+                        
+                        <!-- 批量结果网格 -->
+                        <div id="batchResultsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-gray-600 text-sm">
+                <p>Instagram AI图片生成助手 &copy; 2023</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

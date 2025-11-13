@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+    .content-auto {
+        content-visibility: auto;
+    }
+    .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .transition-all-300 {
+        transition: all 300ms ease-in-out;
+    }
+}
+
+body {
+    background-color: #FAFAFA;
+}
+.upload-area {
+    border: 2px dashed #D1D5DB;
+    transition: all 0.3s ease;
+}
+.upload-area:hover,
+.upload-area.active {
+    border-color: #E4405F;
+    background-color: #FEF2F2;
+}
+.btn-primary {
+    background-color: #E4405F;
+    transition: all 0.3s ease;
+}
+.btn-primary:hover {
+    background-color: #C02642;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(228, 64, 95, 0.3);
+}
+.btn-secondary {
+    background-color: #515BD4;
+    transition: all 0.3s ease;
+}
+.btn-secondary:hover {
+    background-color: #3D41B8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(81, 91, 212, 0.3);
+}
+.card {
+    transition: all 0.3s ease;
+}
+.card:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: translateY(-5px);
+}
+.text-area-focus:focus {
+    border-color: #E4405F;
+    box-shadow: 0 0 0 3px rgba(228, 64, 95, 0.1);
+}

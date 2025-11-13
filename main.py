@@ -9,10 +9,10 @@ import random
 import os
 
 # 导入服务类
-from service.login import InstagramLoginService, get_chrome_options, create_webdriver
-from service.file_management_service import FileManagementService
-from service.media_upload_service import MediaUploadService
-from service.text_processing_service import TextProcessingService
+from ins_robot.login import InstagramLoginService, get_chrome_options, create_webdriver
+from ins_robot.file_management_service import FileManagementService
+from ins_robot.media_upload_service import MediaUploadService
+from ins_robot.text_processing_service import TextProcessingService
 
 class InstagramAutoPoster:
     """

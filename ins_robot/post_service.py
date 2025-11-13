@@ -231,7 +231,7 @@ class InstagramPostService:
 
 # 测试代码
 if __name__ == "__main__":
-    from service.login import InstagramLoginService, get_chrome_options, create_webdriver
+    from ins_robot.login import InstagramLoginService, get_chrome_options, create_webdriver
     import os
     
     driver = None
