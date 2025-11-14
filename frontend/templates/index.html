@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram助手 - 主页</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="/static/js/tailwind.config.js"></script>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body class="font-sans min-h-screen bg-gray-50">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fa fa-instagram text-primary text-3xl mr-3"></i>
+                    <span class="text-xl font-bold text-dark">Instagram助手</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-dark mb-4">欢迎使用Instagram助手</h1>
+            <p class="text-xl text-gray-600">选择您要使用的功能</p>
+        </div>
+
+        <!-- 功能选择卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- AI图片生成卡片 -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card hover:shadow-xl transition-all-300">
+                <div class="p-8">
+                    <div class="text-center mb-6">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                            <i class="fa fa-magic text-blue-600 text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-dark mb-2">AI图片生成</h2>
+                        <p class="text-gray-600">使用AI技术生成高质量的Instagram图片</p>
+                    </div>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fa fa-check text-green-500 mr-2"></i>
+                            <span>智能图片描述生成</span>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fa fa-check text-green-500 mr-2"></i>
+                            <span>批量图片生成</span>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fa fa-check text-green-500 mr-2"></i>
+                            <span>参考图片支持</span>
+                        </div>
+                    </div>
+                    
+                    <a href="/ai_generate" class="block w-full text-center bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                        <i class="fa fa-arrow-right mr-2"></i>
+                        开始生成
+                    </a>
+                </div>
+            </div>
+
+            <!-- Instagram发布卡片 -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card hover:shadow-xl transition-all-300">
+                <div class="p-8">
+                    <div class="text-center mb-6">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
+                            <i class="fa fa-upload text-purple-600 text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-dark mb-2">Instagram发布</h2>
+                        <p class="text-gray-600">自动化发布内容到Instagram平台</p>
+                    </div>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fa fa-check text-green-500 mr-2"></i>
+                            <span>智能内容管理</span>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fa fa-check text-green-500 mr-2"></i>
+                            <span>定时发布功能</span>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fa fa-check text-green-500 mr-2"></i>
+                            <span>多平台支持</span>
+                        </div>
+                    </div>
+                    
+                    <a href="/instagram_publish" class="block w-full text-center bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors">
+                        <i class="fa fa-arrow-right mr-2"></i>
+                        开始发布
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="mt-16 bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="p-8">
+                <h3 class="text-xl font-bold text-dark mb-6 text-center">使用流程</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
+                            <span class="text-blue-600 font-bold">1</span>
+                        </div>
+                        <h4 class="font-semibold text-dark mb-2">选择功能</h4>
+                        <p class="text-sm text-gray-600">选择AI图片生成或Instagram发布功能</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
+                            <span class="text-blue-600 font-bold">2</span>
+                        </div>
+                        <h4 class="font-semibold text-dark mb-2">配置内容</h4>
+                        <p class="text-sm text-gray-600">根据需要配置生成参数或发布设置</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
+                            <span class="text-blue-600 font-bold">3</span>
+                        </div>
+                        <h4 class="font-semibold text-dark mb-2">完成任务</h4>
+                        <p class="text-sm text-gray-600">AI生成图片或自动发布到Instagram</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-gray-600 text-sm">
+                <p>Instagram助手 &copy; 2023 - 让内容创作更简单</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
