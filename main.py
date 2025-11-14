@@ -2,8 +2,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from apscheduler.schedulers.blocking import BlockingScheduler
-from apscheduler.triggers.cron import CronTrigger
+# from apscheduler.schedulers.blocking import BlockingScheduler
+# from apscheduler.triggers.cron import CronTrigger
 import time
 import random
 import os
@@ -24,7 +24,7 @@ class InstagramAutoPoster:
         初始化自动发布器
         """
         self.file_service = FileManagementService()
-        self.scheduler = BlockingScheduler()
+        # self.scheduler = BlockingScheduler()  # 移除定时调度器
     
     def initialize_folders(self):
         """
@@ -35,34 +35,70 @@ class InstagramAutoPoster:
         if self.file_service.should_create_new_structure():
             self.file_service.create_weekly_folder_structure()
     
-    def schedule_tasks(self):
+    def check_folder_structure(self):
         """
-        安排定时任务
-        - 周一早上8点创建新的文件夹结构
-        - 周一至周五12:00-14:00之间随机时间发布帖子
+        检查文件夹结构
         """
-        # 每周一早上8点创建文件夹结构
-        self.scheduler.add_job(
-            self.file_service.create_weekly_folder_structure,
-            CronTrigger(day_of_week='0', hour=8, minute=0),
-            id='create_folder_structure',
-            name='创建每周文件夹结构'
-        )
-        print("[自动发布器] 已安排每周一早上8点创建文件夹结构的任务")
+        print("\n=== 检查文件夹结构 ===")
         
-        # 周一至周五每天在12:00-14:00之间随机时间发布帖子
-        for day in range(5):  # 0=周一, 4=周五
-            # 生成随机分钟数（0-120分钟，即2小时）
-            random_minutes = random.randint(0, 120)
+        # 获取当前周文件夹
+        current_week = self.file_service.get_current_week_folder()
+        print(f"当前周文件夹: {current_week}")
+        
+        # 检查data/media目录
+        base_dir = self.file_service.base_dir
+        print(f"基础目录: {base_dir}")
+        
+        if os.path.exists(base_dir):
+            print("✅ 基础目录存在")
             
-            # 添加任务
-            self.scheduler.add_job(
-                self.publish_post,
-                CronTrigger(day_of_week=str(day), hour=12, minute=random_minutes),
-                id=f'publish_post_day_{day}',
-                name=f'发布帖子（{"周一" if day==0 else "周二" if day==1 else "周三" if day==2 else "周四" if day==3 else "周五"}）'
-            )
-            print(f"[自动发布器] 已安排{"周一" if day==0 else "周二" if day==1 else "周三" if day==2 else "周四" if day==3 else "周五"} {12 + random_minutes // 60}:{random_minutes % 60:02d} 发布帖子")
+            # 列出所有周文件夹
+            week_folders = []
+            for item in os.listdir(base_dir):
+                item_path = os.path.join(base_dir, item)
+                if os.path.isdir(item_path) and '-' in item:
+                    week_folders.append(item)
+            
+            if week_folders:
+                print(f"找到 {len(week_folders)} 个周文件夹:")
+                for folder in sorted(week_folders):
+                    print(f"  - {folder}")
+                    
+                    # 检查子文件夹
+                    folder_path = os.path.join(base_dir, folder)
+                    subdirs = [d for d in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, d))]
+                    if subdirs:
+                        print(f"    子文件夹: {', '.join(sorted(subdirs))}")
+            else:
+                print("❌ 未找到周文件夹")
+        else:
+            print("❌ 基础目录不存在")
+            
+        print("===================")
+        """
+        手动发布模式 - 根据当前日期执行对应的发布任务
+        """
+        from datetime import datetime
+        import calendar
+        
+        today = datetime.now()
+        weekday = today.weekday()  # 0=周一, 6=周日
+        
+        print(f"\n=== 手动发布模式 ===")
+        print(f"今天是: {today.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"星期: {'周一' if weekday==0 else '周二' if weekday==1 else '周三' if weekday==2 else '周四' if weekday==3 else '周五' if weekday==4 else '周六' if weekday==5 else '周日'}")
+        
+        # 检查是否在工作日范围内（周一到周五）
+        if weekday >= 5:  # 周六或周日
+            print("❌ 今天是周末，不执行发布任务")
+            return
+        
+        print(f"✅ 今天是工作日，开始执行发布任务...")
+        
+        # 执行发布任务
+        self.publish_post()
+        
+        print("\n=== 手动发布完成 ===")
     
     def publish_post(self):
         """
@@ -165,47 +201,54 @@ class InstagramAutoPoster:
     
     def run(self):
         """
-        运行自动发布器
+        运行手动发布模式
         """
         try:
             # 初始化文件夹
             self.initialize_folders()
             
-            # 安排定时任务
-            self.schedule_tasks()
+            print("\n=== Instagram手动发布助手 ===")
+            print("1. 手动发布今日内容")
+            print("2. 检查文件夹结构")
+            print("3. 退出")
             
-            print("\n[自动发布器] 定时任务已启动，按Ctrl+C停止...")
-            
-            # 启动调度器
-            self.scheduler.start()
-            
+            while True:
+                choice = input("\n请选择操作 (1-3): ").strip()
+                
+                if choice == '1':
+                    self.manual_publish()
+                elif choice == '2':
+                    self.check_folder_structure()
+                elif choice == '3':
+                    print("\n感谢使用，再见！")
+                    break
+                else:
+                    print("无效选择，请重新输入")
+                    
         except KeyboardInterrupt:
-            print("\n[自动发布器] 用户中断程序")
+            print("\n\n用户中断程序，正在退出...")
         except Exception as e:
-            print(f"\n[自动发布器] 发生错误: {e}")
+            print(f"\n发生错误: {e}")
         finally:
-            # 关闭调度器
-            if hasattr(self, 'scheduler'):
-                self.scheduler.shutdown()
-            print("[自动发布器] 程序已退出")
+            print("程序已退出")
 
 def main():
     """
     主函数
     """
-    print("=== Instagram自动发布助手 ===")
-    print("正在启动自动发布服务...")
+    print("=== Instagram手动发布助手 ===")
+    print("正在启动手动发布服务...")
     
     # 检查是否安装了必要的依赖
     try:
         import selenium
-        import apscheduler
+        # import apscheduler  # 移除定时任务依赖
     except ImportError as e:
         print(f"[错误] 缺少必要的依赖: {e}")
-        print("请运行: pip install selenium apscheduler webdriver-manager")
+        print("请运行: pip install selenium webdriver-manager")
         return
     
-    # 启动自动发布器
+    # 启动手动发布器
     auto_poster = InstagramAutoPoster()
     auto_poster.run()
 

@@ -6,9 +6,9 @@
 ## 功能特性
 
 ### 1. 文件管理
-- 按照规定结构存放于media/文件夹下
-- 每周一自动删除media下的所有文件夹，然后创建新的文件夹结构
-- 创建格式为`media/MMDD-MMDD`的主文件夹（表示一周的日期范围）
+- 按照规定结构存放于data/media/文件夹下
+- 每周一自动删除data/media下的所有文件夹，然后创建新的文件夹结构
+- 创建格式为`data/media/MMDD-MMDD`的主文件夹（表示一周的日期范围）
 - 在主文件夹内创建Monday、Tuesday、Wednesday、Thursday、Friday子文件夹
 - 用户手动在对应日期的文件夹中存放图片文件(.jpg)和文案文件(.txt)
 

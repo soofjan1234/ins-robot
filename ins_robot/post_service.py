@@ -261,8 +261,8 @@ if __name__ == "__main__":
                 upload_ready = post_service.wait_for_upload_interface()
                 
                 if upload_ready:
-                    # 尝试上传测试图片（假设在项目根目录有1.jpg）
-                    test_image_path = os.path.abspath("../1.jpg")
+                    # 尝试上传测试图片（假设在项目根目录有1.png）
+                    test_image_path = os.path.abspath("../1.png")
                     if os.path.exists(test_image_path):
                         print(f"[测试] 尝试上传测试图片: {test_image_path}")
                         upload_success = post_service.upload_media(test_image_path)
