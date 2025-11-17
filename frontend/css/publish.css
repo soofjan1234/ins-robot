@@ -1,0 +1,340 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    color: #333;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.back-btn {
+    text-decoration: none;
+    color: #667eea;
+    font-weight: 600;
+    padding: 10px 20px;
+    border: 2px solid #667eea;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #667eea;
+    color: white;
+}
+
+.publish-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 30px;
+}
+
+/* 左侧图片区域 */
+.image-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.image-upload-area {
+    border: 3px dashed #ddd;
+    border-radius: 15px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: #fafafa;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-upload-area:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.image-upload-area.has-image {
+    border-color: #667eea;
+    background: white;
+    padding: 20px;
+}
+
+.upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.upload-icon {
+    font-size: 4rem;
+    color: #ccc;
+}
+
+.upload-placeholder p {
+    color: #999;
+    font-size: 1.1rem;
+}
+
+#image-input {
+    display: none;
+}
+
+.image-preview {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.remove-image {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #ff4757;
+    transition: all 0.3s ease;
+}
+
+.remove-image:hover {
+    background: #ff4757;
+    color: white;
+}
+
+.image-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.secondary-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.secondary-btn:hover {
+    background: #5a6268;
+}
+
+.image-info {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* 右侧文案区域 */
+.text-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.text-input-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.text-input-container label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+#post-caption {
+    flex: 1;
+    min-height: 300px;
+    padding: 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 1rem;
+    line-height: 1.6;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.3s ease;
+}
+
+#post-caption:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.char-counter {
+    text-align: right;
+    color: #999;
+    font-size: 0.9rem;
+    margin-top: 8px;
+}
+
+.char-counter.warning {
+    color: #ff9500;
+}
+
+.char-counter.danger {
+    color: #ff4757;
+}
+
+.text-controls {
+    margin-top: 20px;
+}
+
+
+
+/* 底部发布按钮 */
+.publish-actions {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 2px solid #e9ecef;
+}
+
+.publish-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 25px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.publish-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.publish-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.publish-status {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    display: none;
+}
+
+.publish-status.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.publish-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.publish-status.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .content-wrapper {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .container {
+        padding: 10px;
+    }
+    
+    header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .publish-container {
+        padding: 20px;
+    }
+    
+    .image-upload-area {
+        min-height: 250px;
+        padding: 20px;
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+    }
+}
