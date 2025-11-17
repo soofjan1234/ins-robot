@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let selectedFile = null;
 
+    // 页面加载时获取今日内容
+    loadTodayContent();
+
     // 图片上传功能
     imageUploadArea.addEventListener('click', function() {
         if (!selectedFile) {
@@ -112,6 +115,84 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
+
+    // 获取今日内容函数
+    async function loadTodayContent() {
+        try {
+            const response = await fetch('http://localhost:5000/api/today-content');
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('今日内容加载成功:', result.data);
+                
+                // 如果有文本内容，自动填充到文案框
+                if (result.data.texts && result.data.texts.length > 0) {
+                    const firstText = result.data.texts[0];
+                    postCaption.value = firstText.content;
+                    // 手动触发input事件来更新字符计数
+                    const event = new Event('input');
+                    postCaption.dispatchEvent(event);
+                    showNotification(`已加载今日${result.data.today}的文案内容`, 'success');
+                }
+                
+            } else {
+                console.warn('获取今日内容失败:', result.message);
+                showNotification('暂无今日内容，请手动上传', 'info');
+            }
+        } catch (error) {
+            console.error('加载今日内容出错:', error);
+            showNotification('加载今日内容失败，请手动操作', 'error');
+        }
+    }
+
+    // 显示通知函数
+    function showNotification(message, type = 'info') {
+        // 创建通知元素
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        
+        // 添加样式
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            transform: translateX(100%);
+            opacity: 0;
+        `;
+        
+        // 根据类型设置背景色
+        const colors = {
+            success: '#28a745',
+            error: '#dc3545',
+            info: '#17a2b8',
+            warning: '#ffc107'
+        };
+        notification.style.backgroundColor = colors[type] || colors.info;
+        
+        document.body.appendChild(notification);
+        
+        // 显示动画
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+            notification.style.opacity = '1';
+        }, 100);
+        
+        // 自动隐藏
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
 
     // 发布功能
     publishBtn.addEventListener('click', function() {
