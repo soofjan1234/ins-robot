@@ -132,7 +132,7 @@ def test_instagram_upload():
         # 6. 上传1.jpg文件
         print("\n[测试] 尝试上传1.jpg文件...")
         # 获取1.jpg的绝对路径
-        file_path = os.path.abspath("data/1.jpg")
+        file_path = os.path.abspath("data/1.png")
         print(f"[测试] 上传文件路径: {file_path}")
         
         # 检查文件是否存在
@@ -172,8 +172,8 @@ def test_instagram_upload():
             print("[测试] 点击分享按钮...")
 
             # 保持浏览器打开一段时间以便观察
-            print("\n[测试] 测试完成！浏览器将保持打开60秒，您可以观察结果...")
-            time.sleep(60)
+            print("\n[测试] 测试完成！浏览器将保持打开120秒，您可以观察结果...")
+            time.sleep(120)
             return True
         else:
             print("[测试] 文件上传失败")
