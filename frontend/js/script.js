@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const generateBtn = document.getElementById('generate-btn');
     const editBtn = document.getElementById('edit-btn');
+    const organizeBtn = document.getElementById('organize-btn');
     const publishBtn = document.getElementById('publish-btn');
 
     generateBtn.addEventListener('click', function() {
@@ -11,6 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
     editBtn.addEventListener('click', function() {
         console.log('P图功能被点击');
         window.location.href = 'pedit.html';
+    });
+
+    organizeBtn.addEventListener('click', function() {
+        console.log('整理功能被点击');
+        window.location.href = 'organize.html';
     });
 
     publishBtn.addEventListener('click', function() {

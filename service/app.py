@@ -130,15 +130,12 @@ def watermark_process():
                     image_data = image_data.split(',')[1]  # 移除data:image/jpeg;base64,前缀
                 
                 image_bytes = base64.b64decode(image_data)
-                
-                # 获取原始文件名（去掉扩展名）
-                base_name = os.path.splitext(original_filename)[0]
-                original_name = base_name
+            
                 
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 temp_input = os.path.join(result_dir, f'temp_input_{timestamp}_{i}.jpg')
                 temp_output = os.path.join(result_dir, f'temp_output_{timestamp}_{i}.jpg')
-                final_output = os.path.join(result_dir, f'{original_name}_ps.jpg')
+                final_output = os.path.join(result_dir, original_filename)
                 
                 # 保存原始图片到临时文件
                 with open(temp_input, 'wb') as f:
@@ -160,7 +157,7 @@ def watermark_process():
                 
                 processed_images.append({
                     'index': i,
-                    'filename': f'{original_name}_ps.jpg',
+                    'filename': original_filename,
                     'data': f'data:image/jpeg;base64,{processed_image_base64}',
                     'size': len(processed_image_bytes)
                 })
@@ -494,6 +491,70 @@ def get_text_content(weekday, filename):
             'message': f'获取文本内容失败: {str(e)}'
         }), 500
 
+@app.route('/api/load-ps-images', methods=['GET'])
+def load_ps_images():
+    """
+    加载PS结果文件夹中的图片
+    返回图片列表和base64编码的图片数据
+    """
+    try:
+        # PS结果文件夹路径
+        ps_result_path = 'd:/otherWorkspace/ins-robot/data/ps_result'
+        
+        if not os.path.exists(ps_result_path):
+            return jsonify({
+                'success': False,
+                'message': 'PS结果文件夹不存在',
+                'path': ps_result_path
+            }), 404
+        
+        # 扫描文件夹中的图片文件
+        files = os.listdir(ps_result_path)
+        images = []
+        
+        for file in files:
+            file_path = os.path.join(ps_result_path, file)
+            if os.path.isfile(file_path) and file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                try:
+                    # 读取图片文件并转换为base64
+                    with open(file_path, 'rb') as f:
+                        image_bytes = f.read()
+                    
+                    # 转换为base64编码
+                    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+                    
+                    images.append({
+                        'filename': file,
+                        'data': image_base64,
+                        'size': len(image_bytes),
+                        'size_mb': round(len(image_bytes) / (1024 * 1024), 2)
+                    })
+                    
+                    print(f"[加载PS图片] 成功加载图片: {file} ({len(image_bytes)} bytes)")
+                    
+                except Exception as e:
+                    print(f"[加载PS图片] 处理图片 {file} 失败: {str(e)}")
+                    continue
+        
+        print(f"[加载PS图片] 总共加载了 {len(images)} 张图片")
+        
+        return jsonify({
+            'success': True,
+            'message': f'成功加载 {len(images)} 张PS结果图片',
+            'data': {
+                'images': images,
+                'total_images': len(images),
+                'path': ps_result_path
+            }
+        })
+        
+    except Exception as e:
+        print(f"[加载PS图片] 加载失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'加载PS结果图片失败: {str(e)}'
+        }), 500
+
 @app.route('/health')
 def health_check():
     return jsonify({
@@ -510,6 +571,7 @@ if __name__ == '__main__':
     print("  POST /api/edit - P图功能") 
     print("  POST /api/watermark-process - 水印处理功能")
     print("  POST /api/publish - 发布功能")
+    print("  GET  /api/load-ps-images - 加载PS结果图片")
     print("  GET  /api/weekday-images/<weekday> - 获取指定星期图片列表")
     print("  GET  /api/text-content/<weekday>/<filename> - 获取文本内容")
     print("  GET  /health - 健康检查")

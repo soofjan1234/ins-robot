@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>整理图片 - Instagram Robot</title>
+    <link rel="stylesheet" href="/css/organize.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>整理图片</h1>
+            <a href="index.html" class="back-btn">← 返回首页</a>
+        </header>
+        
+        <main class="organize-section">
+            <!-- 图片加载区域 -->
+            <section class="image-loading-section">
+                <div id="loadingStatus" class="loading-status">正在加载图片...</div>
+            </section>
+
+            <!-- 主要内容区域 -->
+            <div class="main-content">
+                <h2>图片文案整理</h2>
+                
+                <!-- 图片名称列表 -->
+                <div id="imageNamesList" class="image-names-list"></div>
+                
+                <!-- AI生成按钮 -->
+                <div class="ai-generate-section">
+                    <button id="generateAllBtn" class="primary-btn">生成AI文案</button>
+                </div>
+
+                <!-- 文案输入区域 -->
+                <div class="text-inputs-section">
+                    <h3>输入文案</h3>
+                    <div class="text-inputs-grid">
+                        <input type="text" class="text-input-main" id="textInput1" placeholder="文案1">
+                        <input type="text" class="text-input-main" id="textInput2" placeholder="文案2">
+                        <input type="text" class="text-input-main" id="textInput3" placeholder="文案3">
+                        <input type="text" class="text-input-main" id="textInput4" placeholder="文案4">
+                        <input type="text" class="text-input-main" id="textInput5" placeholder="文案5">
+                    </div>
+                </div>
+                
+                <!-- 整理操作 -->
+                <div class="organize-controls-section">
+                    <button id="organizeBtn" class="primary-btn">开始整理</button>
+                </div>
+                
+                <div id="organizeStatus" class="organize-status"></div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/js/organize.js"></script>
+</body>
+</html>

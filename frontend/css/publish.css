@@ -39,18 +39,21 @@ header h1 {
 }
 
 .back-btn {
-    text-decoration: none;
-    color: #667eea;
-    font-weight: 600;
-    padding: 10px 20px;
-    border: 2px solid #667eea;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 12px 30px;
     border-radius: 25px;
+    font-size: 1rem;
+    cursor: pointer;
     transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
 }
 
 .back-btn:hover {
-    background: #667eea;
-    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
 .publish-container {
