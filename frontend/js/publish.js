@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedImage = this.value;
         
         if (selectedImage) {
-            const fullPath = `/d:/otherWorkspace/ins-robot/data/media/${weekdaySelect.value}/${selectedImage}`;
+            const fullPath = `d:/otherWorkspace/ins-robot/data/media/${weekdaySelect.value}/${selectedImage}`;
             selectedImagePath.textContent = fullPath;
             selectedImageInfo.style.display = 'block';
             
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 获取不带扩展名的文件名
             const baseName = imageFilename.split('.')[0];
             const textFilename = `${baseName}.txt`;
-            const textPath = `/d:/otherWorkspace/ins-robot/data/media/${weekday}/${textFilename}`;
+            const textPath = `d:/otherWorkspace/ins-robot/data/media/${weekday}/${textFilename}`;
             
             console.log(`尝试加载文案文件: ${textPath}`);
             

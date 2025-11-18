@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能P图工具</title>
+    <link rel="stylesheet" href="../css/pedit.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🎨 智能P图工具</h1>
+            <p class="subtitle">支持批量图片上传和水印处理</p>
+        </header>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-content">
+                    <div class="upload-icon">📁</div>
+                    <h3>拖拽图片到这里</h3>
+                    <p>或者点击选择图片</p>
+                    <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">选择图片</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-section" id="previewSection" style="display: none;">
+            <h3>📸 图片预览</h3>
+            <div class="image-grid" id="imageGrid">
+                <!-- 图片预览将在这里显示 -->
+            </div>
+        </div>
+
+        <div class="controls-section" id="controlsSection" style="display: none;">
+            <div class="action-buttons">
+                <button class="process-btn" id="processBtn">
+                    <span class="btn-icon">🚀</span>
+                    水印处理
+                </button>
+                <button class="clear-btn" id="clearBtn">
+                    <span class="btn-icon">🗑️</span>
+                    清空图片
+                </button>
+            </div>
+        </div>
+
+        <div class="loading-section" id="loadingSection" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">正在处理图片，请稍候...</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-text" id="progressText">0 / 0</p>
+        </div>
+
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <h3>✨ 处理结果</h3>
+            <div class="results-grid" id="resultsGrid">
+                <!-- 处理结果将在这里显示 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/pedit.js"></script>
+</body>
+</html>

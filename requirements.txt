@@ -5,3 +5,5 @@ APScheduler
 flask
 flask-cors
 pillow
+opencv-python
+numpy

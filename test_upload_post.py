@@ -4,10 +4,10 @@ from selenium.webdriver.common.by import By
 import os
 import time
 
-# 从login模块导入封装的浏览器配置函数和服务
-from ins_robot.login import InstagramLoginService, get_chrome_options, create_webdriver
-from ins_robot.media_upload_service import MediaUploadService
-from ins_robot.text_processing_service import TextProcessingService
+# 从service.ins_robot模块导入封装的浏览器配置函数和服务
+from service.ins_robot.login import InstagramLoginService, get_chrome_options, create_webdriver
+from service.ins_robot.media_upload_service import MediaUploadService
+from service.ins_robot.text_processing_service import TextProcessingService
 
 def test_instagram_upload():
     """

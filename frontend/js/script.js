@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     editBtn.addEventListener('click', function() {
         console.log('P图功能被点击');
-        alert('P图功能开发中...');
+        window.location.href = 'pedit.html';
     });
 
     publishBtn.addEventListener('click', function() {
