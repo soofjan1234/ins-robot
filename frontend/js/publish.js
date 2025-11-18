@@ -1,12 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const imageUploadArea = document.getElementById('image-upload-area');
-    const imageInput = document.getElementById('image-input');
-    const uploadPlaceholder = document.getElementById('upload-placeholder');
-    const imagePreview = document.getElementById('image-preview');
-    const previewImg = document.getElementById('preview-img');
-    const removeImageBtn = document.getElementById('remove-image');
-    const selectImageBtn = document.getElementById('select-image-btn');
-    const imageInfo = document.getElementById('image-info');
+    // 图片选择相关元素
+    const weekdaySelect = document.getElementById('weekday-select');
+    const imageSelect = document.getElementById('image-select');
+    const selectedImageInfo = document.getElementById('selected-image-info');
+    const selectedImagePath = document.getElementById('selected-image-path');
+    const removeSelectedImageBtn = document.getElementById('remove-selected-image');
     const postCaption = document.getElementById('post-caption');
     const charCount = document.getElementById('char-count');
     const publishBtn = document.getElementById('publish-btn');
@@ -17,86 +15,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 页面加载时获取今日内容
     loadTodayContent();
-
-    // 图片上传功能
-    imageUploadArea.addEventListener('click', function() {
-        if (!selectedFile) {
-            imageInput.click();
-        }
-    });
-
-    selectImageBtn.addEventListener('click', function() {
-        imageInput.click();
-    });
-
-    imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            handleImageUpload(file);
-        }
-    });
-
-    // 拖拽上传
-    imageUploadArea.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        imageUploadArea.style.borderColor = '#667eea';
-        imageUploadArea.style.backgroundColor = '#f0f4ff';
-    });
-
-    imageUploadArea.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        imageUploadArea.style.borderColor = '#ddd';
-        imageUploadArea.style.backgroundColor = '#fafafa';
-    });
-
-    imageUploadArea.addEventListener('drop', function(e) {
-        e.preventDefault();
-        imageUploadArea.style.borderColor = '#ddd';
-        imageUploadArea.style.backgroundColor = '#fafafa';
-        
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            const file = files[0];
-            if (file.type.startsWith('image/')) {
-                handleImageUpload(file);
-            } else {
-                showStatus('请上传图片文件！', 'error');
-            }
-        }
-    });
-
-    function handleImageUpload(file) {
-        if (!file.type.startsWith('image/')) {
-            showStatus('请上传有效的图片文件！', 'error');
-            return;
-        }
-
-        selectedFile = file;
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            uploadPlaceholder.style.display = 'none';
-            imagePreview.style.display = 'block';
-            imageUploadArea.classList.add('has-image');
-            
-            const fileSize = (file.size / 1024 / 1024).toFixed(2);
-            imageInfo.textContent = `${file.name} (${fileSize}MB)`;
-        };
-        
-        reader.readAsDataURL(file);
-    }
-
-    // 移除图片
-    removeImageBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        selectedFile = null;
-        imageInput.value = '';
-        uploadPlaceholder.style.display = 'flex';
-        imagePreview.style.display = 'none';
-        imageUploadArea.classList.remove('has-image');
-        imageInfo.textContent = '未选择图片';
-    });
 
     // 文案字数统计
     postCaption.addEventListener('input', function() {
@@ -116,33 +34,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    // 获取今日内容函数
+    // 获取今日内容函数（已废弃）
     async function loadTodayContent() {
-        try {
-            const response = await fetch('http://localhost:5000/api/today-content');
-            const result = await response.json();
-            
-            if (result.success) {
-                console.log('今日内容加载成功:', result.data);
-                
-                // 如果有文本内容，自动填充到文案框
-                if (result.data.texts && result.data.texts.length > 0) {
-                    const firstText = result.data.texts[0];
-                    postCaption.value = firstText.content;
-                    // 手动触发input事件来更新字符计数
-                    const event = new Event('input');
-                    postCaption.dispatchEvent(event);
-                    showNotification(`已加载今日${result.data.today}的文案内容`, 'success');
-                }
-                
-            } else {
-                console.warn('获取今日内容失败:', result.message);
-                showNotification('暂无今日内容，请手动上传', 'info');
-            }
-        } catch (error) {
-            console.error('加载今日内容出错:', error);
-            showNotification('加载今日内容失败，请手动操作', 'error');
-        }
+        // 此功能已废弃，不再自动加载今日内容
+        console.log('今日内容加载功能已废弃');
     }
 
     // 显示通知函数
@@ -197,63 +92,59 @@ document.addEventListener('DOMContentLoaded', function() {
     // 发布功能
     publishBtn.addEventListener('click', function() {
         if (!selectedFile) {
-            showStatus('请先选择要发布的图片！', 'error');
+            showNotification('请先选择要发布的图片！', 'error');
             return;
         }
 
         if (postCaption.value.trim().length === 0) {
-            showStatus('请输入帖子文案！', 'error');
+            showNotification('请输入帖子文案！', 'error');
             return;
         }
 
         publishPost();
     });
 
-    function publishPost() {
-        const formData = new FormData();
-        formData.append('image', selectedFile);
-        formData.append('content', postCaption.value);
-
+    async function publishPost() {
         publishBtn.disabled = true;
-        publishBtn.innerHTML = '<span class="btn-icon">⏳</span> 发布中...';
-        showStatus('正在发布帖子...', 'info');
+        publishBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 发布中...';
 
-        // 模拟API调用
-        setTimeout(() => {
-            showStatus('帖子发布成功！', 'success');
-            publishBtn.disabled = false;
-            publishBtn.innerHTML = '<span class="btn-icon">📤</span> 立即发布';
+        try {
+            // 由于我们选择的是服务器上的文件，需要修改发布逻辑
+            const formData = new FormData();
+            formData.append('image_path', selectedFile.path); // 使用文件路径而不是文件对象
+            formData.append('content', postCaption.value);
+
+            const response = await fetch('http://localhost:5000/api/publish', {
+                method: 'POST',
+                body: formData
+            });
             
-            // 3秒后跳转到首页
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 3000);
-        }, 2000);
-
-        /* 实际API调用代码（需要后端支持）
-        fetch('/api/publish', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
+            const data = await response.json();
+            
             if (data.success) {
-                showStatus('帖子发布成功！', 'success');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 2000);
+                showNotification('发布成功！', 'success');
+                // 重置表单
+                selectedFile = null;
+                postCaption.value = '';
+                charCount.textContent = '0';
+                
+                // 隐藏已选图片信息
+                selectedImageInfo.style.display = 'none';
+                
+                // 重置图片选择
+                imageSelect.value = '';
+                weekdaySelect.value = '';
+                
             } else {
-                showStatus('发布失败：' + data.message, 'error');
+                showNotification('发布失败：' + data.message, 'error');
             }
-        })
-        .catch(error => {
-            showStatus('发布失败：' + error.message, 'error');
-        })
-        .finally(() => {
+        } catch (error) {
+            console.error('发布失败:', error);
+            showNotification('发布失败，请检查网络连接', 'error');
+        } finally {
             publishBtn.disabled = false;
-            publishBtn.innerHTML = '<span class="btn-icon">📤</span> 立即发布';
-        });
-        */
+            publishBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 发布到Instagram';
+        }
     }
 
     function showStatus(message, type) {
@@ -266,6 +157,129 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
 
-    // 初始化
-    imageInfo.textContent = '未选择图片';
+    // 星期选择变化事件
+    weekdaySelect.addEventListener('change', function() {
+        const selectedWeekday = this.value;
+        imageSelect.innerHTML = '<option value="">加载中...</option>';
+        
+        if (selectedWeekday) {
+            // 模拟加载该星期下的图片列表
+            loadImagesForWeekday(selectedWeekday);
+        } else {
+            imageSelect.innerHTML = '<option value="">请先选择星期</option>';
+            imageSelect.disabled = true;
+            selectedImageInfo.style.display = 'none';
+        }
+    });
+    
+    // 图片选择变化事件
+    imageSelect.addEventListener('change', function() {
+        const selectedImage = this.value;
+        
+        if (selectedImage) {
+            const fullPath = `/d:/otherWorkspace/ins-robot/data/media/${weekdaySelect.value}/${selectedImage}`;
+            selectedImagePath.textContent = fullPath;
+            selectedImageInfo.style.display = 'block';
+            
+            // 模拟文件对象
+            selectedFile = {
+                name: selectedImage,
+                size: 1024 * 1024, // 假设1MB
+                path: fullPath
+            };
+            
+            // 根据图片文件名加载对应的文案
+            loadTextContentForImage(selectedImage, weekdaySelect.value);
+        } else {
+            selectedImageInfo.style.display = 'none';
+            selectedFile = null;
+            // 清空文案
+            postCaption.value = '';
+            charCount.textContent = '0';
+        }
+    });
+    
+    // 根据图片文件名加载对应的文案
+    async function loadTextContentForImage(imageFilename, weekday) {
+        try {
+            // 获取不带扩展名的文件名
+            const baseName = imageFilename.split('.')[0];
+            const textFilename = `${baseName}.txt`;
+            const textPath = `/d:/otherWorkspace/ins-robot/data/media/${weekday}/${textFilename}`;
+            
+            console.log(`尝试加载文案文件: ${textPath}`);
+            
+            // 尝试读取对应的txt文件
+            const response = await fetch(`http://localhost:5000/api/text-content/${weekday}/${textFilename}`);
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data && result.data.content) {
+                    postCaption.value = result.data.content;
+                    // 手动触发input事件来更新字符计数
+                    const event = new Event('input');
+                    postCaption.dispatchEvent(event);
+                    showNotification(`已自动加载对应文案: ${textFilename}`, 'success');
+                } else {
+                    showNotification(`文案文件为空: ${textFilename}`, 'warning');
+                }
+            } else {
+                console.log(`未找到对应的文案文件: ${textFilename}`);
+                showNotification(`未找到对应文案: ${textFilename}`, 'info');
+                // 清空文案框
+                postCaption.value = '';
+                charCount.textContent = '0';
+            }
+        } catch (error) {
+            console.error('加载文案失败:', error);
+            showNotification('加载对应文案失败', 'error');
+            // 清空文案框
+            postCaption.value = '';
+            charCount.textContent = '0';
+        }
+    }
+    
+    // 移除图片按钮事件
+    removeSelectedImageBtn.addEventListener('click', function() {
+        weekdaySelect.value = '';
+        imageSelect.innerHTML = '<option value="">请先选择星期</option>';
+        imageSelect.disabled = true;
+        selectedImageInfo.style.display = 'none';
+        selectedFile = null;
+    });
+    
+    // 加载指定星期的图片列表
+    async function loadImagesForWeekday(weekday) {
+        try {
+            const response = await fetch(`http://localhost:5000/api/weekday-images/${weekday}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                const images = result.data.images;
+                
+                if (images.length > 0) {
+                    imageSelect.innerHTML = '<option value="">请选择图片</option>';
+                    images.forEach(image => {
+                        const option = document.createElement('option');
+                        option.value = image.filename;
+                        option.textContent = `${image.filename} (${image.size_mb}MB)`;
+                        imageSelect.appendChild(option);
+                    });
+                    imageSelect.disabled = false;
+                } else {
+                    imageSelect.innerHTML = '<option value="">该星期暂无图片</option>';
+                    imageSelect.disabled = true;
+                }
+            } else {
+                imageSelect.innerHTML = '<option value="">加载失败</option>';
+                imageSelect.disabled = true;
+                showNotification(`加载图片列表失败: ${result.message}`, 'error');
+            }
+        } catch (error) {
+            console.error('加载图片列表出错:', error);
+            imageSelect.innerHTML = '<option value="">加载出错</option>';
+            imageSelect.disabled = true;
+            showNotification('加载图片列表出错，请检查网络连接', 'error');
+        }
+    }
 });

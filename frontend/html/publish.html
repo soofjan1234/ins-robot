@@ -17,21 +17,32 @@
             <div class="content-wrapper">
                 <!-- 左侧图片区域 -->
                 <div class="image-section">
-                    <div class="image-upload-area" id="image-upload-area">
-                        <div class="upload-placeholder" id="upload-placeholder">
-                            <div class="upload-icon">📷</div>
-                            <p>点击或拖拽上传图片</p>
-                            <input type="file" id="image-input" accept="image/*" multiple>
+                    <div class="image-selection-area">
+                        <h3>选择图片</h3>
+                        <div class="weekday-selector">
+                            <label for="weekday-select">选择星期:</label>
+                            <select id="weekday-select">
+                                <option value="">请选择星期</option>
+                                <option value="Monday">星期一</option>
+                                <option value="Tuesday">星期二</option>
+                                <option value="Wednesday">星期三</option>
+                                <option value="Thursday">星期四</option>
+                                <option value="Friday">星期五</option>
+                            </select>
                         </div>
-                        <div class="image-preview" id="image-preview" style="display: none;">
-                            <img id="preview-img" src="" alt="预览图片">
-                            <button class="remove-image" id="remove-image">×</button>
+                        
+                        <div class="image-selector">
+                            <label for="image-select">选择图片:</label>
+                            <select id="image-select" disabled>
+                                <option value="">请先选择星期</option>
+                            </select>
                         </div>
-                    </div>
-                    
-                    <div class="image-controls">
-                        <button class="secondary-btn" id="select-image-btn">选择图片</button>
-                        <span class="image-info" id="image-info">未选择图片</span>
+                        
+                        <div class="selected-image-info" id="selected-image-info" style="display: none;">
+                            <h4>已选择的图片:</h4>
+                            <div class="image-path-display" id="selected-image-path"></div>
+                            <button class="remove-image-btn" id="remove-selected-image">移除图片</button>
+                        </div>
                     </div>
                 </div>
                 

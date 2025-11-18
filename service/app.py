@@ -86,17 +86,35 @@ def edit_image():
 @app.route('/api/publish', methods=['POST'])
 def publish_post():
     try:
-        data = request.get_json()
-        content = data.get('content', '')
-        images = data.get('images', [])
+        # 检查请求类型，支持 JSON 和 FormData
+        if request.content_type and 'application/json' in request.content_type:
+            data = request.get_json()
+            content = data.get('content', '')
+            images = data.get('images', [])
+            image_path = data.get('image_path', '')
+        else:
+            # 处理 FormData
+            content = request.form.get('content', '')
+            image_path = request.form.get('image_path', '')
+            images = []
         
         print(f"发布请求 - 内容: {content[:50]}...")
+        if image_path:
+            print(f"图片路径: {image_path}")
+        
+        # 验证图片路径是否存在
+        if image_path and not os.path.exists(image_path):
+            return jsonify({
+                'success': False,
+                'message': f'图片文件不存在: {image_path}'
+            }), 400
         
         return jsonify({
             'success': True,
             'message': '发布功能开发中...',
             'data': {
                 'content_length': len(content),
+                'image_path': image_path,
                 'image_count': len(images),
                 'status': 'processing'
             }
@@ -107,69 +125,114 @@ def publish_post():
             'message': f'发布失败: {str(e)}'
         }), 500
 
-@app.route('/api/today-content', methods=['GET'])
-def get_today_content():
+# /api/today-content 功能已删除 - 2025-11-18
+
+@app.route('/api/weekday-images/<weekday>', methods=['GET'])
+def get_weekday_images(weekday):
     try:
-        # 获取今天是星期几（0=Monday, 6=Sunday）
-        today = datetime.now().weekday()
-        weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        today_folder = weekdays[today]
+        # 验证星期参数
+        valid_weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        if weekday not in valid_weekdays:
+            return jsonify({
+                'success': False,
+                'message': f'无效的星期参数: {weekday}',
+                'valid_weekdays': valid_weekdays
+            }), 400
         
         # 构建媒体文件夹路径
-        media_path = os.path.join('d:\\otherWorkspace\\ins-robot\\data\\media', today_folder)
+        media_path = os.path.join('d:\otherWorkspace\ins-robot\data\media', weekday)
         
         if not os.path.exists(media_path):
             return jsonify({
                 'success': False,
-                'message': f'今日内容文件夹不存在: {today_folder}',
-                'data': {
-                    'today': today_folder,
-                    'path': media_path
-                }
+                'message': f'该星期文件夹不存在: {weekday}',
+                'path': media_path
             })
         
-        # 扫描文件夹中的文件
+        # 扫描文件夹中的图片文件
         files = os.listdir(media_path)
         images = []
-        texts = []
         
         for file in files:
             file_path = os.path.join(media_path, file)
-            if os.path.isfile(file_path):
-                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
-                    images.append({
-                        'filename': file,
-                        'path': file_path,
-                        'size': os.path.getsize(file_path)
-                    })
-                elif file.lower().endswith('.txt'):
-                    try:
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            content = f.read().strip()
-                            if content:
-                                texts.append({
-                                    'filename': file,
-                                    'content': content,
-                                    'size': len(content)
-                                })
-                    except Exception as e:
-                        print(f"读取文本文件失败 {file}: {e}")
+            if os.path.isfile(file_path) and file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                images.append({
+                    'filename': file,
+                    'path': file_path,
+                    'size': os.path.getsize(file_path),
+                    'size_mb': round(os.path.getsize(file_path) / (1024 * 1024), 2)
+                })
         
         return jsonify({
             'success': True,
-            'message': '成功获取今日内容',
+            'message': f'成功获取{weekday}的图片列表',
             'data': {
-                'today': today_folder,
+                'weekday': weekday,
                 'images': images,
-                'texts': texts,
-                'total_files': len(images) + len(texts)
+                'total_images': len(images),
+                'path': media_path
             }
         })
         
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'获取今日内容失败: {str(e)}'
+            'message': f'获取图片列表失败: {str(e)}'
+        }), 500
+
+@app.route('/api/text-content/<weekday>/<filename>', methods=['GET'])
+def get_text_content(weekday, filename):
+    try:
+        # 验证星期参数
+        valid_weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        if weekday not in valid_weekdays:
+            return jsonify({
+                'success': False,
+                'message': f'无效的星期参数: {weekday}'
+            }), 400
+        
+        # 验证文件名
+        if not filename.lower().endswith('.txt'):
+            return jsonify({
+                'success': False,
+                'message': '只支持txt文件'
+            }), 400
+        
+        # 构建文本文件路径
+        text_path = os.path.join('d:\otherWorkspace\ins-robot\data\media', weekday, filename)
+        
+        if not os.path.exists(text_path):
+            return jsonify({
+                'success': False,
+                'message': f'文本文件不存在: {filename}'
+            }), 404
+        
+        # 读取文本内容
+        try:
+            with open(text_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            return jsonify({
+                'success': True,
+                'message': '成功获取文本内容',
+                'data': {
+                    'filename': filename,
+                    'content': content,
+                    'size': len(content),
+                    'path': text_path
+                }
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'读取文本文件失败: {str(e)}'
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'获取文本内容失败: {str(e)}'
         }), 500
 
 @app.route('/health')
@@ -187,7 +250,8 @@ if __name__ == '__main__':
     print("  POST /api/generate - 生图功能")
     print("  POST /api/edit - P图功能") 
     print("  POST /api/publish - 发布功能")
-    print("  GET  /api/today-content - 获取今日内容")
+    print("  GET  /api/weekday-images/<weekday> - 获取指定星期图片列表")
+    print("  GET  /api/text-content/<weekday>/<filename> - 获取文本内容")
     print("  GET  /health - 健康检查")
     print("\n服务启动在 http://localhost:5000")
     
