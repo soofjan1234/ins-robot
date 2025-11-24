@@ -10,6 +10,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 导入水印处理模块
 from ps.watermark import remove_watermark_inpaint, add_watermark
+# 导入AI文案生成模块
+from organize.ai_organize import generate_ai_text
 
 app = Flask(__name__)
 CORS(app)
@@ -39,7 +41,8 @@ def api_status():
             'generate': '/api/generate',
             'edit': '/api/edit', 
             'publish': '/api/publish',
-            'today_content': '/api/today-content'
+            'today_content': '/api/today-content',
+            'generate_ai_text': '/api/generate-ai-text'
         }
     })
 
@@ -383,6 +386,55 @@ def publish_post():
             'message': f'发布API处理失败: {str(e)}'
         }), 500
 
+@app.route('/api/generate-ai-text', methods=['POST'])
+def generate_ai_text_api():
+    """
+    AI文案生成API - 基于用户输入的文案和图片名称生成优化后的文案内容
+    """
+    try:
+        data = request.get_json()
+        image_names = data.get('image_names', [])  # 图片名称列表
+        
+        print(f"[AI文案生成API] 收到生成请求")
+        print(f"[AI文案生成API] 图片名称数量: {len(image_names)}")
+        print(f"[AI文案生成API] 图片名称: {image_names}")
+        
+        # 验证输入数据
+        if not image_names:
+            return jsonify({
+                'success': False,
+                'message': '请提供图片名称'
+            }), 400
+        
+        # 调用AI文案生成函数
+        result = generate_ai_text(image_names)
+        
+        if result['success']:
+            print(f"[AI文案生成API] AI文案生成成功")
+            return jsonify({
+                'success': True,
+                'message': 'AI文案生成成功',
+                'texts': result['texts'],  # 直接返回texts字段
+                'total_generated': len(result['texts']),
+                'ai_response': result.get('ai_response', ''),
+                'model': 'deepseek-v3-1-terminus'
+            })
+        else:
+            print(f"[AI文案生成API] AI文案生成失败: {result.get('error', '未知错误')}")
+            return jsonify({
+                'success': False,
+                'message': f'AI文案生成失败: {result.get("error", "未知错误")}',
+                'texts': result['texts'],  # 返回默认文案
+                'error': result.get('error', '未知错误')
+            }), 500
+            
+    except Exception as e:
+        print(f"[AI文案生成API] 处理失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'AI文案生成API处理失败: {str(e)}'
+        }), 500
+
 @app.route('/api/weekday-images/<weekday>', methods=['GET'])
 def get_weekday_images(weekday):
     try:
@@ -555,6 +607,241 @@ def load_ps_images():
             'message': f'加载PS结果图片失败: {str(e)}'
         }), 500
 
+@app.route('/api/organize-images', methods=['POST'])
+def organize_images():
+    """
+    整理图片和文案到星期文件夹
+    每个文件夹放一张图片和一个文案文件
+    """
+    try:
+        data = request.get_json()
+        
+        # 获取参数
+        image_names = data.get('image_names', [])  # 图片名称列表
+        texts = data.get('texts', [])  # 文案列表
+        
+        if not image_names:
+            return jsonify({
+                'success': False,
+                'message': '图片名称列表不能为空'
+            }), 400
+        
+        if not texts:
+            return jsonify({
+                'success': False,
+                'message': '文案列表不能为空'
+            }), 400
+        
+        if len(image_names) != len(texts):
+            return jsonify({
+                'success': False,
+                'message': f'图片数量({len(image_names)})与文案数量({len(texts)})不匹配'
+            }), 400
+        
+        # 定义星期文件夹列表
+        weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        
+        # 基础路径
+        base_media_path = 'd:/otherWorkspace/ins-robot/data/media'
+        ps_result_path = 'd:/otherWorkspace/ins-robot/data/ps_result'
+        
+        # 确保media基础路径存在
+        os.makedirs(base_media_path, exist_ok=True)
+        
+        # 先清空每个星期文件夹下的文件
+        print("[整理] 开始清空星期文件夹...")
+        for weekday in weekdays:
+            weekday_path = os.path.join(base_media_path, weekday)
+            if not os.path.exists(weekday_path):
+                # 如果文件夹不存在，创建它
+                os.makedirs(weekday_path, exist_ok=True)
+                print(f"[整理] 创建文件夹: {weekday_path}")
+        
+        print("[整理] 星期文件夹清空完成")
+        
+        organized_files = []
+        
+        # 遍历图片和文案
+        for i, (image_name, text) in enumerate(zip(image_names, texts)):
+            # 如果图片数量超过7个，循环使用星期文件夹
+            weekday = weekdays[i % len(weekdays)]
+            
+            # 创建星期文件夹
+            weekday_path = os.path.join(base_media_path, weekday)
+            os.makedirs(weekday_path, exist_ok=True)
+            
+            # 源图片路径
+            source_image_path = os.path.join(ps_result_path, image_name)
+            
+            if not os.path.exists(source_image_path):
+                print(f"[整理] 图片不存在: {source_image_path}")
+                continue
+            
+            # 目标图片路径
+            target_image_path = os.path.join(weekday_path, image_name)
+            
+            try:
+                # 复制图片到目标文件夹
+                import shutil
+                shutil.copy2(source_image_path, target_image_path)
+                print(f"[整理] 复制图片: {image_name} -> {weekday_path}")
+                
+                # 创建对应的文案文件
+                text_filename = f"{os.path.splitext(image_name)[0]}.txt"
+                text_file_path = os.path.join(weekday_path, text_filename)
+                
+                # 写入文案内容
+                with open(text_file_path, 'w', encoding='utf-8') as f:
+                    f.write(text)
+                
+                print(f"[整理] 创建文案: {text_filename} -> {weekday_path}")
+                
+                organized_files.append({
+                    'weekday': weekday,
+                    'image_name': image_name,
+                    'text_filename': text_filename,
+                    'image_path': target_image_path,
+                    'text_path': text_file_path
+                })
+                
+            except Exception as e:
+                print(f"[整理] 处理文件 {image_name} 失败: {str(e)}")
+                continue
+        
+        if not organized_files:
+            return jsonify({
+                'success': False,
+                'message': '没有成功整理任何文件'
+            }), 400
+        
+        return jsonify({
+            'success': True,
+            'message': f'成功整理了 {len(organized_files)} 个文件',
+            'data': {
+                'total_organized': len(organized_files),
+                'organized_files': organized_files,
+                'weekdays_used': list(set(f['weekday'] for f in organized_files))
+            }
+        })
+        
+    except Exception as e:
+        print(f"[整理] API处理失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'整理文件失败: {str(e)}'
+        }), 500
+
+@app.route('/api/clean-files', methods=['POST'])
+def clean_files():
+    """
+    清理功能API - 清理三个文件夹中的图片和txt文件
+    """
+    try:
+        # 定义要清理的三个文件夹路径
+        base_dir = 'd:/otherWorkspace/ins-robot/data'
+        clean_paths = [
+            os.path.join(base_dir, 'ps_result'),
+            os.path.join(base_dir, 'photoshop'),
+            os.path.join(base_dir, 'media')
+        ]
+        
+        print(f"[清理功能] 开始清理三个文件夹")
+        
+        # 统计信息
+        total_image_count = 0
+        total_txt_count = 0
+        total_file_count = 0
+        total_size = 0
+        
+        # 清理结果
+        results = []
+        
+        # 遍历每个要清理的路径
+        for clean_path in clean_paths:
+            print(f"[清理功能] 开始清理路径: {clean_path}")
+            
+            # 检查路径是否存在
+            if not os.path.exists(clean_path):
+                print(f"[清理功能] 路径不存在: {clean_path}")
+                results.append({
+                    'path': clean_path,
+                    'status': 'skipped',
+                    'reason': '路径不存在'
+                })
+                continue
+            
+            # 本路径的统计信息
+            path_image_count = 0
+            path_txt_count = 0
+            path_file_count = 0
+            path_size = 0
+            
+            # 递归遍历文件夹
+            for root, dirs, files in os.walk(clean_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    
+                    # 只清理图片文件和txt文件
+                    if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')) or \
+                       file.lower().endswith('.txt'):
+                        try:
+                            file_size = os.path.getsize(file_path)
+                            path_size += file_size
+                            
+                            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                                path_image_count += 1
+                            elif file.lower().endswith('.txt'):
+                                path_txt_count += 1
+                            
+                            os.remove(file_path)
+                            path_file_count += 1
+                            print(f"[清理功能] 已删除: {file_path}")
+                            
+                        except Exception as e:
+                            print(f"[清理功能] 删除文件失败 {file_path}: {str(e)}")
+                            # 继续清理其他文件
+                            continue
+            
+            # 更新总数统计
+            total_image_count += path_image_count
+            total_txt_count += path_txt_count
+            total_file_count += path_file_count
+            total_size += path_size
+            
+            # 添加本路径的结果
+            results.append({
+                'path': clean_path,
+                'status': 'completed',
+                'image_files_cleaned': path_image_count,
+                'text_files_cleaned': path_txt_count,
+                'total_files_cleaned': path_file_count,
+                'size_cleaned_mb': round(path_size / (1024 * 1024), 2)
+            })
+        
+        # 转换总大小为MB
+        total_size_mb = round(total_size / (1024 * 1024), 2)
+        
+        print(f"[清理功能] 全部清理完成 - 图片: {total_image_count}, 文本: {total_txt_count}, 总文件数: {total_file_count}, 总大小: {total_size_mb}MB")
+        
+        return jsonify({
+            'success': True,
+            'message': '三个文件夹清理完成',
+            'data': {
+                'total_image_files_cleaned': total_image_count,
+                'total_text_files_cleaned': total_txt_count,
+                'total_files_cleaned': total_file_count,
+                'total_size_cleaned_mb': total_size_mb,
+                'folder_results': results
+            }
+        })
+        
+    except Exception as e:
+        print(f"[清理功能] 清理失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'文件清理失败: {str(e)}'
+        }), 500
+
 @app.route('/health')
 def health_check():
     return jsonify({
@@ -564,17 +851,6 @@ def health_check():
 
 if __name__ == '__main__':
     print("Starting Instagram Robot Service...")
-    print("Available endpoints:")
-    print("  GET  / - 主页")
-    print("  GET  /api/status - API状态")
-    print("  POST /api/generate - 生图功能")
-    print("  POST /api/edit - P图功能") 
-    print("  POST /api/watermark-process - 水印处理功能")
-    print("  POST /api/publish - 发布功能")
-    print("  GET  /api/load-ps-images - 加载PS结果图片")
-    print("  GET  /api/weekday-images/<weekday> - 获取指定星期图片列表")
-    print("  GET  /api/text-content/<weekday>/<filename> - 获取文本内容")
-    print("  GET  /health - 健康检查")
     print("\n服务启动在 http://localhost:5000")
     
     app.run(host='0.0.0.0', port=5000, debug=True)

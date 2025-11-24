@@ -60,27 +60,32 @@ class ImageOrganizer {
         btn.innerHTML = '<span class="loading"></span> 生成中...';
 
         try {
-            // 随机选择一张图片来生成文案
-            const randomIndex = Math.floor(Math.random() * this.images.length);
-            const image = this.images[randomIndex];
+            // 获取所有图片名称
+            const imageNames = this.images.map(img => img.filename);
             
-            const response = await fetch('http://localhost:5000/api/generate-ai-text', {
+            // 调用AI文案生成API - 使用预设主题，无需用户输入
+            const response = await fetch('/api/generate-ai-text', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    filename: image.filename,
-                    image_data: image.data
+                    image_names: imageNames
                 })
             });
             
             const result = await response.json();
             
             if (result.success) {
-                // 将生成的文案放入第一个输入框
-                document.getElementById('textInput1').value = result.data.text;
-                alert('AI文案生成成功！已填入第一个输入框');
+                // 将生成的文案填充到输入框
+                const texts = result.texts;
+                for (let i = 0; i < texts.length && i < 5; i++) {
+                    const input = document.getElementById(`textInput${i + 1}`);
+                    if (input) {
+                        input.value = texts[i];
+                    }
+                }
+                alert('AI文案生成成功！已自动生成5条文案并填入输入框');
             } else {
                 alert('生成失败: ' + result.message);
             }
@@ -111,17 +116,17 @@ class ImageOrganizer {
             return;
         }
         
+        if (this.images.length === 0) {
+            status.textContent = '没有可整理的图片';
+            return;
+        }
+        
         btn.disabled = true;
         status.textContent = '正在整理中...';
         
         try {
-            // 将文案与图片对应
-            const imageTexts = {};
-            this.images.forEach((image, index) => {
-                if (index < texts.length) {
-                    imageTexts[image.filename] = texts[index];
-                }
-            });
+            // 获取图片名称列表（只取前5个）
+            const imageNames = this.images.slice(0, 5).map(img => img.filename);
             
             const response = await fetch('/api/organize-images', {
                 method: 'POST',
@@ -129,7 +134,8 @@ class ImageOrganizer {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    texts: imageTexts
+                    image_names: imageNames,
+                    texts: texts
                 })
             });
             
@@ -139,10 +145,12 @@ class ImageOrganizer {
                 status.innerHTML = `
                     <div style="color: #28a745;">
                         <strong>整理成功！</strong><br>
-                        已整理到文件夹: ${result.data.folder}<br>
-                        共处理 ${result.data.count} 张图片
+                        已整理 ${result.data.total_organized} 个文件<br>
+                        使用的文件夹: ${result.data.weekdays_used.join(', ')}<br>
+                        每个文件夹包含一张图片和一个文案文件
                     </div>
                 `;
+                alert('整理完成！图片和文案已分布到各星期文件夹中');
             } else {
                 status.innerHTML = `<div style="color: #dc3545;">整理失败: ${result.message}</div>`;
             }

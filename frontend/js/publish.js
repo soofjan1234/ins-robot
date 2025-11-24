@@ -202,8 +202,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 根据图片文件名加载对应的文案
     async function loadTextContentForImage(imageFilename, weekday) {
         try {
-            // 获取不带扩展名的文件名
-            const baseName = imageFilename.split('.')[0];
+            // 获取不带扩展名的文件名（处理文件名中包含多个点的情况，如2.55.jpg）
+            const lastDotIndex = imageFilename.lastIndexOf('.');
+            const baseName = lastDotIndex !== -1 ? imageFilename.substring(0, lastDotIndex) : imageFilename;
             const textFilename = `${baseName}.txt`;
             const textPath = `d:/otherWorkspace/ins-robot/data/media/${weekday}/${textFilename}`;
             

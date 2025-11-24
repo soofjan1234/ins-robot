@@ -52,7 +52,13 @@ header h1 {
     background-clip: text;
 }
 
-.back-btn {
+.header-nav {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.back-btn, .next-btn {
     background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
     border: none;
@@ -65,9 +71,18 @@ header h1 {
     display: inline-block;
 }
 
+.next-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+}
+
 .back-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.next-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
 }
 
 /* 内容区域样式 - 玻璃拟态效果 */
