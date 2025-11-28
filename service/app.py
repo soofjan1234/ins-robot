@@ -5,6 +5,10 @@ import sys
 from datetime import datetime
 import base64
 import json
+import uuid
+import threading
+import queue
+import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -12,6 +16,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from ps.watermark import remove_watermark_inpaint, add_watermark
 # 导入AI文案生成模块
 from organize.ai_organize import generate_ai_text
+# 导入AI图片生成模块
+from ai.ai import chat
 
 app = Flask(__name__)
 CORS(app)
@@ -31,41 +37,135 @@ def serve_static(filename):
         return send_from_directory(frontend_path, filename)
     return send_from_directory(os.path.join(frontend_path, 'html'), filename)
 
-# API状态接口
-@app.route('/api/status')
-def api_status():
-    return jsonify({
-        'message': 'Instagram Robot Service is running!',
-        'version': '1.0.0',
-        'endpoints': {
-            'generate': '/api/generate',
-            'edit': '/api/edit', 
-            'publish': '/api/publish',
-            'today_content': '/api/today-content',
-            'generate_ai_text': '/api/generate-ai-text'
-        }
-    })
-
-@app.route('/api/generate', methods=['POST'])
-def generate_image():
+@app.route('/api/ai-generate', methods=['POST'])
+def generate_ai_image():
+    """
+    AI图片生成接口
+    接收客户端上传的图片，调用AI处理并返回结果
+    """
     try:
+        # 获取请求数据
         data = request.get_json()
-        prompt = data.get('prompt', '')
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': '请求数据为空或格式错误'
+            }), 400
         
-        print(f"生图请求 - 提示词: {prompt}")
+        # 提取图片数组
+        images = data.get('images', [])
+        if not images or not isinstance(images, list):
+            return jsonify({
+                'success': False,
+                'message': '未提供有效的图片数据'
+            }), 400
         
-        return jsonify({
-            'success': True,
-            'message': '生图功能开发中...',
-            'data': {
-                'prompt': prompt,
-                'status': 'processing'
-            }
-        })
+        # 准备存储所有处理结果
+        all_results = []
+        temp_filepaths = []
+        
+        try:
+            # 循环处理每张图片
+            for i, img in enumerate(images):
+                # 提取图片数据和文件名
+                if isinstance(img, dict) and 'data' in img:
+                    image_data = img['data']
+                    original_filename = img.get('filename', f'uploaded_image_{i+1}')
+                else:
+                    # 兼容直接是base64字符串的情况
+                    image_data = img
+                    original_filename = f'uploaded_image_{i+1}'
+                
+                # 处理base64数据
+                if ',' in image_data:
+                    image_data = image_data.split(',')[1]  # 移除data:image/jpeg;base64,前缀
+                
+                # 创建临时目录保存图片
+                temp_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'temp_ai_images')
+                os.makedirs(temp_dir, exist_ok=True)
+                
+                # 生成临时文件名
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
+                temp_filename = f'temp_ai_image_{timestamp}_{i}_{original_filename}'
+                temp_filepath = os.path.join(temp_dir, temp_filename)
+                temp_filepaths.append(temp_filepath)
+                
+                try:
+                    # 保存图片到临时文件
+                    with open(temp_filepath, 'wb') as f:
+                        f.write(base64.b64decode(image_data))
+                    
+                    print(f"[AI图片生成] 已保存临时图片文件: {temp_filepath}")
+                    
+                    # 调用AI处理函数
+                    ai_result = chat(temp_filepath)
+                    
+                    # 检查AI处理结果
+                    if 'error' in ai_result:
+                        result = {
+                            'success': False,
+                            'message': f'AI处理失败: {ai_result["error"]}',
+                            'filename': original_filename
+                        }
+                        all_results.append(result)
+                        continue
+                    
+                    # 提取处理后的结果
+                    text_content = ai_result.get('text_content', '')
+                    image_base64 = ai_result.get('image_base64', '')
+                    
+                    if not image_base64:
+                        result = {
+                            'success': False,
+                            'message': 'AI处理未返回图片数据',
+                            'filename': original_filename
+                        }
+                        all_results.append(result)
+                        continue
+                    
+                    # 添加到结果列表
+                    all_results.append({
+                        'success': True,
+                        'message': 'AI图片生成成功',
+                        'data': {
+                            'text_content': text_content,
+                            'image': f'data:image/jpeg;base64,{image_base64}',
+                            'filename': ai_result.get('filename', original_filename)
+                        }
+                    })
+                    
+                except Exception as e:
+                    print(f"[AI图片生成] 处理图片 {original_filename} 失败: {str(e)}")
+                    all_results.append({
+                        'success': False,
+                        'message': f'处理失败: {str(e)}',
+                        'filename': original_filename
+                    })
+            
+            # 检查是否所有处理都成功
+            all_success = all(result['success'] for result in all_results)
+            
+            # 返回综合结果
+            return jsonify({
+                'success': all_success,
+                'results': all_results
+            })
+            
+        finally:
+            # 清理所有临时文件
+            for temp_filepath in temp_filepaths:
+                if os.path.exists(temp_filepath):
+                    try:
+                        os.remove(temp_filepath)
+                        print(f"[AI图片生成] 已清理临时图片文件: {temp_filepath}")
+                    except Exception as e:
+                        print(f"[AI图片生成] 清理临时文件失败: {str(e)}")
+        
     except Exception as e:
+        print(f"[AI图片生成] 处理失败: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'生图失败: {str(e)}'
+            'message': f'服务器处理失败: {str(e)}'
         }), 500
 
 @app.route('/api/edit', methods=['POST'])
@@ -842,6 +942,7 @@ def clean_files():
             'message': f'文件清理失败: {str(e)}'
         }), 500
 
+ 
 @app.route('/health')
 def health_check():
     return jsonify({

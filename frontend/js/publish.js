@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 获取今日内容函数（已废弃）
     async function loadTodayContent() {
         // 此功能已废弃，不再自动加载今日内容
-        console.log('今日内容加载功能已废弃');
     }
 
     // 显示通知函数
@@ -163,10 +162,9 @@ document.addEventListener('DOMContentLoaded', function() {
         imageSelect.innerHTML = '<option value="">加载中...</option>';
         
         if (selectedWeekday) {
-            // 模拟加载该星期下的图片列表
             loadImagesForWeekday(selectedWeekday);
         } else {
-            imageSelect.innerHTML = '<option value="">请先选择星期</option>';
+            imageSelect.innerHTML = '<option value="">请先选择图片</option>';
             imageSelect.disabled = true;
             selectedImageInfo.style.display = 'none';
         }

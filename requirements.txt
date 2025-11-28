@@ -8,3 +8,5 @@ pillow
 opencv-python
 numpy
 openai
+google-generativeai
+requests

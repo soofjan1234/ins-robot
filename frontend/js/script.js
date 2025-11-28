@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     generateBtn.addEventListener('click', function() {
         console.log('生图功能被点击');
-        alert('生图功能开发中...');
+        window.location.href = 'generate.html';
     });
 
     editBtn.addEventListener('click', function() {
