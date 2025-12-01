@@ -6,7 +6,7 @@ def clean_files():
     # 定义基础数据目录
     base_dir = 'd:/otherWorkspace/ins-robot/data'
     # 定义需要清理的文件夹
-    folders = ['toGenerate', 'toPS', 'toRefine', 'toPublish']
+    folders = ['toGenerate', 'toPS', 'toRefine', 'toPublish', 'temp_ai_images']
     for folder in folders:
         path = os.path.join(base_dir, folder)
         if os.path.exists(path):

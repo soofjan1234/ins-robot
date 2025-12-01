@@ -326,19 +326,11 @@ class GenerateTool {
      */
     async batchGenerateImages() {
         try {
-            // 将所有图片转换为base64格式，同时保留文件名信息
-            const imagePromises = this.uploadedImages.map(image => {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve({
-                        data: e.target.result,
-                        filename: image.name
-                    });
-                    reader.readAsDataURL(image.file);
-                });
-            });
-
-            const imagesWithNames = await Promise.all(imagePromises);
+            // 直接使用已有的base64数据，不需要再次使用FileReader读取
+            const imagesWithNames = this.uploadedImages.map(image => ({
+                data: image.url, // 直接使用已有的base64 URL
+                filename: image.name
+            }));
 
             // 调用后端批量生成API
             // 显示加载状态
@@ -449,9 +441,6 @@ class GenerateTool {
                 item.innerHTML = `
                     <img src="${image.generatedUrl}" alt="生成结果" class="result-image">
                     <div class="action-buttons">
-                        <button class="download-btn" onclick="generateTool.downloadImage('${image.generatedUrl}')">
-                            下载
-                        </button>
                         <button class="regenerate-btn" onclick="generateTool.regenerateImage(${index}, '${image.generatedUrl}')">
                             重新生成
                         </button>
@@ -556,16 +545,7 @@ class GenerateTool {
     /**
      * 下载图片
      */
-    downloadImage(imageUrl) {
-        const a = document.createElement('a');
-        a.href = imageUrl;
-        a.download = `generated-image-${Date.now()}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        showNotification('图片下载成功！', 'success');
-    }
+
 
     /**
      * 显示预览区域

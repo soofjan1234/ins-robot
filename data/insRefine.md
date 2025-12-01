@@ -5,7 +5,9 @@
     2. toPS: 待p图
     3. toRefine：待整理
     4. toPublish：待发布。 下面是Monday、Tuesday、Wednesday、Thursday、Friday文件夹
-3. []清理
+3. [√]清理
     1. tmp加上2里的所有文件夹
 4. []提前加载图片
+5. []ai生成部分
+    1. 取消下载 改为保存 同时文件名字不变
 

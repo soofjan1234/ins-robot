@@ -402,15 +402,7 @@ def generate_ai_image():
             
         finally:
             print("[AI图片生成] 完成")
-            # 清理所有临时文件
-            # for temp_filepath in temp_filepaths:
-            #     if os.path.exists(temp_filepath):
-            #         try:
-            #             os.remove(temp_filepath)
-            #             print(f"[AI图片生成] 任务 {task_id} - 已清理临时图片文件: {temp_filepath}")
-            #         except Exception as e:
-            #             print(f"[AI图片生成] 任务 {task_id} - 清理临时文件失败: {str(e)}")
-        
+            
     except Exception as e:
         error_msg = f"服务器处理失败: {str(e)}"
         print(f"[AI图片生成] 任务 {task_id} - {error_msg}")

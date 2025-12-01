@@ -149,14 +149,30 @@ def chat(image_file):
                 break
         
         if base64_data:
-            # 保存生成的图片
-            saved_filename = save_base64_image(base64_data, filename=f"ai_generated_{os.path.basename(image_file)}")
-            print(f"图片保存成功: {saved_filename}")
+            # 创建toPS目录
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            tops_dir = os.path.join(base_dir, 'data', 'toPS')
+            os.makedirs(tops_dir, exist_ok=True)
+            
+            # 使用原始文件名保存到toPS目录
+            original_basename = os.path.basename(image_file)
+            name, ext = os.path.splitext(original_basename)
+            if not ext:
+                ext = '.jpg'  # 默认使用.jpg扩展名
+            tops_filename = f"{name}{ext}"
+            tops_filepath = os.path.join(tops_dir, tops_filename)
+            
+            # 保存图片到toPS目录
+            with open(tops_filepath, 'wb') as f:
+                f.write(base64.b64decode(base64_data))
+            print(f"图片已保存到toPS目录: {tops_filepath}")
+            
+        
             return {
                 'success': True,
                 'text_content': text_content,
                 'image_base64': base64_data,
-                'filename': saved_filename
+                'filename': tops_filename
             }
         else:
             print("未在响应中找到内联图片数据")

@@ -3,15 +3,10 @@ from flask_cors import CORS
 import os
 import sys
 from datetime import datetime
-import base64
-import json
-import uuid
-import threading
-import queue
-import time
 import logging
 from controller.clean import clean_files
 from controller.load import load_to_generate_images
+from controller.ps import regenerate_image, generate_ai_image, request, jsonify
 
 app = Flask(__name__)
 CORS(app)
@@ -43,6 +38,16 @@ def load_to_generate_imgs_api():
         data, status_code = result
         return jsonify(data), status_code
     return jsonify(result), 200
+
+# 图片重新生成接口
+@app.route('/api/regenerate', methods=['POST'])
+def regenerate():
+    return regenerate_image()
+
+# AI图片生成接口
+@app.route('/api/ai-generate', methods=['POST'])
+def generate_ai():
+    return generate_ai_image()
 
 if __name__ == '__main__':
     print("Starting Instagram Robot Service...")
