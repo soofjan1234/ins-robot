@@ -8,25 +8,113 @@ class GenerateTool {
         this.uploadedImages = [];
         this.generatedImages = [];
         this.aiParams = {
-            style: 'standard',
-            resolution: '1024x1024',
-            creativity: 0.7
+            prompt: '',
+            negativePrompt: '',
+            steps: 30,
+            cfgScale: 7,
+            seed: -1,
+            width: 512,
+            height: 512
         };
-        
-        this.initializeEventListeners();
+        this.init();
+        this.loadPendingImages();
     }
 
     /**
-     * 初始化事件监听器
+     * 从后端加载待生成的图片
      */
-    initializeEventListeners() {
-        console.log('初始化事件监听器');
-
+    async loadPendingImages() {
+        try {
+            // 显示加载动画
+            this.showLoading();
+            
+            // 调用后端接口
+            const response = await fetch('http://localhost:5000/api/load-to-generate-imgs', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+    
+            const result = await response.json();
+            
+            if (result.success && result.data && result.data.images) {
+                // 清空现有图片
+                this.uploadedImages = [];
+                
+                // 添加从后端加载的图片
+                result.data.images.forEach(imgData => {
+                    // 根据文件扩展名确定MIME类型
+                    const extension = imgData.filename.split('.').pop().toLowerCase();
+                    const mimeTypes = {
+                        'png': 'image/png',
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    };
+                    const mimeType = mimeTypes[extension] || 'image/png';
+                    
+                    // 添加data:image前缀
+                    const base64Url = `data:${mimeType};base64,${imgData.data}`;
+                    
+                    const imageData = {
+                        id: Date.now() + Math.random(),
+                        file: {
+                            name: imgData.filename,
+                            size: imgData.size
+                        },
+                        name: imgData.filename,
+                        size: this.formatFileSize(imgData.size),
+                        url: base64Url,
+                        generated: false
+                    };
+                    this.uploadedImages.push(imageData);
+                });
+                
+                // 显示预览区域
+                this.renderPreview();
+                this.showPreviewSection();
+                this.updateUI();
+                
+                showNotification(`成功加载 ${result.data.images.length} 张待生成图片！`, 'success');
+            } else {
+                const errorMessage = result.message || '加载待生成图片失败';
+                this.displayError(errorMessage);
+                showNotification(errorMessage, 'error');
+            }
+        } catch (error) {
+            console.error('加载待生成图片失败:', error);
+            
+            // 根据错误类型显示不同的错误信息
+            let errorMessage = '加载待生成图片过程中出现错误';
+            if (error.message.includes('Failed to fetch')) {
+                errorMessage = '网络错误，请检查后端服务是否正常运行';
+            } else if (error.message.includes('timeout')) {
+                errorMessage = '请求超时，请稍后重试';
+            }
+            
+            this.displayError(errorMessage + ': ' + error.message);
+            showNotification(errorMessage + '！', 'error');
+        } finally {
+            // 隐藏加载动画
+            this.hideLoading();
+        }
+    }
+    
+    /**
+     * 初始化事件监听
+     */
+    init() {
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const processBtn = document.getElementById('processBtn');
         const clearBtn = document.getElementById('clearBtn');
-
+    
         if (uploadArea) {
             // 拖拽上传
             uploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
@@ -41,11 +129,11 @@ class GenerateTool {
                 fileInput && fileInput.click();
             });
         }
-
+    
         if (fileInput) {
             fileInput.addEventListener('change', this.handleFileSelect.bind(this));
         }
-
+    
         // AI参数控制面板
         const aiStyle = document.getElementById('aiStyle');
         const resolution = document.getElementById('resolution');
@@ -53,7 +141,7 @@ class GenerateTool {
         if (aiStyle) aiStyle.addEventListener('change', this.updateAIParams.bind(this));
         if (resolution) resolution.addEventListener('change', this.updateAIParams.bind(this));
         if (creativity) creativity.addEventListener('input', this.updateAIParams.bind(this));
-
+    
         if (processBtn) processBtn.addEventListener('click', this.startGenerating.bind(this));
         if (clearBtn) clearBtn.addEventListener('click', this.clearAllImages.bind(this));
     }
@@ -100,13 +188,13 @@ class GenerateTool {
      */
     processFiles(files) {
          if (files.length === 0) return;
-
+    
         files.forEach(file => {
             if (file.type.startsWith('image/')) {
                 this.addImage(file);
             }
         });
-
+    
         this.showPreviewSection();
         this.updateUI();
     }
@@ -141,7 +229,7 @@ class GenerateTool {
         if (!grid) return;
         
         grid.innerHTML = '';
-
+    
         this.uploadedImages.forEach((image, index) => {
             const item = document.createElement('div');
             item.className = 'image-item';
@@ -353,16 +441,21 @@ class GenerateTool {
         
         resultsGrid.innerHTML = '';
 
-        this.generatedImages.forEach(image => {
+        this.generatedImages.forEach((image, index) => {
             const item = document.createElement('div');
             item.className = 'result-item';
             
             if (image.generated) {
                 item.innerHTML = `
                     <img src="${image.generatedUrl}" alt="生成结果" class="result-image">
-                    <button class="download-btn" onclick="generateTool.downloadImage('${image.generatedUrl}')">
-                        下载
-                    </button>
+                    <div class="action-buttons">
+                        <button class="download-btn" onclick="generateTool.downloadImage('${image.generatedUrl}')">
+                            下载
+                        </button>
+                        <button class="regenerate-btn" onclick="generateTool.regenerateImage(${index}, '${image.generatedUrl}')">
+                            重新生成
+                        </button>
+                    </div>
                 `;
             } else {
                 item.innerHTML = `
@@ -376,6 +469,88 @@ class GenerateTool {
             
             resultsGrid.appendChild(item);
         });
+    }
+    
+    /**
+     * 重新生成图片
+     */
+    async regenerateImage(index, imageUrl) {
+        try {
+            // 获取当前操作的结果项，添加局部加载状态
+            const resultItems = document.querySelectorAll('.result-item');
+            const currentItem = resultItems[index];
+            
+            if (currentItem) {
+                // 保存原始内容用于恢复
+                const originalContent = currentItem.innerHTML;
+                // 添加加载状态
+                currentItem.innerHTML = `
+                    <div style="padding: 40px; text-align: center;">
+                        <div class="loading-spinner"></div>
+                        <div style="margin-top: 10px; color: #666;">正在重新生成...</div>
+                    </div>
+                `;
+            }
+            
+            // 调用后端重新生成接口
+            const response = await fetch('http://localhost:5000/api/regenerate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: imageUrl,
+                    index: index
+                })
+            });
+
+            // 检查响应状态
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.success && result.data) {
+                // 更新对应索引的图片
+                this.generatedImages[index] = {
+                    generated: true,
+                    generatedUrl: result.data.image,
+                    text_content: result.data.text_content || '',
+                    filename: result.data.filename || 'regenerated_image'
+                };
+                
+                // 重新渲染结果
+                this.showResults();
+                showNotification('图片重新生成成功！', 'success');
+            } else {
+                const errorMessage = result.message || '服务器处理错误';
+                console.error('重新生成失败:', errorMessage);
+                // 如果有当前项，恢复原始内容
+                if (currentItem) {
+                    this.showResults(); // 重新渲染所有结果，而不是只恢复一个
+                }
+                this.showError('图片重新生成失败: ' + errorMessage);
+                showNotification('图片重新生成失败！', 'error');
+            }
+        } catch (error) {
+            console.error('重新生成失败:', error);
+            // 在全局隐藏加载状态
+            this.hideLoading();
+            // 重新渲染结果，确保状态正确
+            this.showResults();
+            
+            // 根据错误类型显示不同的错误信息
+            let errorMessage = '重新生成过程中出现错误';
+            if (error.message.includes('Failed to fetch')) {
+                errorMessage = '网络错误，请检查后端服务是否正常运行';
+            } else if (error.message.includes('timeout')) {
+                errorMessage = '请求超时，请稍后重试';
+            }
+            
+            this.showError(errorMessage + ': ' + error.message);
+            showNotification(errorMessage + '！', 'error');
+        }
     }
 
     /**
@@ -467,6 +642,35 @@ class GenerateTool {
         
         if (processBtn) processBtn.disabled = !hasImages;
     }
+    
+    /**
+     * 显示错误信息
+     */
+    displayError(message) {
+        console.error('错误:', message);
+        // 可以在这里添加更复杂的错误显示逻辑，比如显示一个错误提示框
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #f44336;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 1002;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        `;
+        errorDiv.textContent = message;
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+            if (document.body.contains(errorDiv)) {
+                document.body.removeChild(errorDiv);
+            }
+        }, 3000);
+    }
 }
 
 // 页面加载完成后初始化工具
@@ -529,26 +733,54 @@ style.textContent = `
         border-radius: 8px;
     }
     
-    .download-btn {
+    .result-item .action-buttons {
         position: absolute;
         bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .result-item:hover .action-buttons {
+        opacity: 1;
+    }
+    
+    .download-btn,
+    .regenerate-btn {
         background-color: rgba(0, 0, 0, 0.7);
         color: white;
         border: none;
         padding: 8px 16px;
         border-radius: 6px;
         cursor: pointer;
-        opacity: 0;
-        transition: all 0.3s ease;
         font-size: 14px;
         font-weight: 500;
+        transition: all 0.3s ease;
     }
     
-    .result-item:hover .download-btn {
-        opacity: 1;
+    .download-btn:hover {
         background-color: rgba(0, 123, 255, 0.9);
+    }
+    
+    .regenerate-btn:hover {
+        background-color: rgba(255, 152, 0, 0.9);
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top-color: #007bff;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
     }
     
     .remove-image {

@@ -11,6 +11,8 @@ dist/
 .DS_Store
 Thumbs.db
 chrome_user_data
-media
-photoshop
-ps_result
+
+toPublish
+toRefine
+toPS
+toGenerate
