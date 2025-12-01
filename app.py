@@ -4,13 +4,13 @@ import os
 import sys
 from datetime import datetime
 import logging
-from controller.clean import clean_files
+from controller.clean.clean import clean_files
 from controller.load import load_to_generate_images, load_to_ps_imgs, load_to_refine_images, get_weekday_images, get_text_content
-from controller.publish import publish_post_api
-from controller.ai import regenerate_image, generate_ai_image
-from controller.ps import watermark_process_logic
-from controller.ai_text import generate_ai_text_api
-from controller.organize import organize_images_api
+from controller.publish.publish import publish_post_api
+from controller.generate.ai import regenerate_image, generate_ai_image
+from controller.ps.ps import watermark_process_logic
+from controller.organize.ai_text import generate_ai_text_api
+from controller.organize.organize import organize_images_api
 
 app = Flask(__name__)
 CORS(app)
