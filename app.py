@@ -5,9 +5,11 @@ import sys
 from datetime import datetime
 import logging
 from controller.clean import clean_files
-from controller.load import load_to_generate_images, load_to_ps_imgs
+from controller.load import load_to_generate_images, load_to_ps_imgs, load_to_refine_images
 from controller.ai import regenerate_image, generate_ai_image
 from controller.ps import watermark_process_logic
+from controller.ai_text import generate_ai_text_api
+from controller.organize import organize_images_api
 
 app = Flask(__name__)
 CORS(app)
@@ -48,6 +50,14 @@ def load_to_ps_imgs_api():
         return jsonify(data), status_code
     return jsonify(result), 200
 
+@app.route('/api/load-to-refine', methods=['GET'])
+def load_to_refine_imgs_api():
+    result = load_to_refine_images()
+    if isinstance(result, tuple) and len(result) == 2:
+        data, status_code = result
+        return jsonify(data), status_code
+    return jsonify(result), 200
+
 # 图片重新生成接口
 @app.route('/api/regenerate', methods=['POST'])
 def regenerate():
@@ -61,6 +71,14 @@ def generate_ai():
 @app.route('/api/watermark-process', methods=['POST'])
 def watermark_process():
     return watermark_process_logic()
+
+@app.route('/api/generate-ai-text', methods=['POST'])
+def generate_ai_text():
+    return generate_ai_text_api()
+
+@app.route('/api/organize-images', methods=['POST'])
+def organize_images():
+    return organize_images_api()
 
 
 if __name__ == '__main__':

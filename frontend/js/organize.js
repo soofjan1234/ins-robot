@@ -17,7 +17,7 @@ class ImageOrganizer {
         status.textContent = '正在加载图片...';
 
         try {
-            const response = await fetch('/api/load-ps-images');
+            const response = await fetch('/api/load-to-refine');
             const result = await response.json();
             
             if (result.success) {
