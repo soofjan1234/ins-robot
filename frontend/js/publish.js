@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedImage = this.value;
         
         if (selectedImage) {
-            const fullPath = `d:/otherWorkspace/ins-robot/data/media/${weekdaySelect.value}/${selectedImage}`;
+            const fullPath = `d:/otherWorkspace/ins-robot/data/toPublish/${weekdaySelect.value}/${selectedImage}`;
             selectedImagePath.textContent = fullPath;
             selectedImageInfo.style.display = 'block';
             
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const lastDotIndex = imageFilename.lastIndexOf('.');
             const baseName = lastDotIndex !== -1 ? imageFilename.substring(0, lastDotIndex) : imageFilename;
             const textFilename = `${baseName}.txt`;
-            const textPath = `d:/otherWorkspace/ins-robot/data/media/${weekday}/${textFilename}`;
+            const textPath = `d:/otherWorkspace/ins-robot/data/toPublish/${weekday}/${textFilename}`;
             
             console.log(`尝试加载文案文件: ${textPath}`);
             

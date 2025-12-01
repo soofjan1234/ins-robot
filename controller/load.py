@@ -100,3 +100,131 @@ def load_to_refine_images():
         dir_path='d:/otherWorkspace/ins-robot/data/toRefine',
         dir_name='toRefine'
     )
+
+def get_weekday_images(weekday):
+    """
+    获取指定星期文件夹中的图片列表
+    
+    Args:
+        weekday (str): 星期名称，如'Monday', 'Tuesday'等
+        
+    Returns:
+        tuple: (结果字典, 状态码) 或 结果字典
+    """
+    try:
+        # 验证星期参数
+        valid_weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        if weekday not in valid_weekdays:
+            return {
+                'success': False,
+                'message': f'无效的星期参数: {weekday}',
+                'valid_weekdays': valid_weekdays
+            }, 400
+        
+        # 构建媒体文件夹路径
+        media_path = os.path.join('d:/otherWorkspace/ins-robot/data/toPublish', weekday)
+        
+        if not os.path.exists(media_path):
+            return {
+                'success': False,
+                'message': f'该星期文件夹不存在: {weekday}',
+                'path': media_path
+            }
+        
+        # 扫描文件夹中的图片文件
+        files = os.listdir(media_path)
+        images = []
+        
+        for file in files:
+            file_path = os.path.join(media_path, file)
+            if os.path.isfile(file_path) and file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                images.append({
+                    'filename': file,
+                    'path': file_path,
+                    'size': os.path.getsize(file_path),
+                    'size_mb': round(os.path.getsize(file_path) / (1024 * 1024), 2)
+                })
+        
+        return {
+            'success': True,
+            'message': f'成功获取{weekday}的图片列表',
+            'data': {
+                'weekday': weekday,
+                'images': images,
+                'total_images': len(images),
+                'path': media_path
+            }
+        }
+        
+    except Exception as e:
+        print(f"[获取星期图片] 失败: {str(e)}")
+        return {
+            'success': False,
+            'message': f'获取图片列表失败: {str(e)}'
+        }, 500
+
+def get_text_content(weekday, filename):
+    """
+    获取指定星期文件夹中文案文件的内容
+    
+    Args:
+        weekday (str): 星期名称，如'Monday', 'Tuesday'等
+        filename (str): 文件名，必须是txt文件
+        
+    Returns:
+        tuple: (结果字典, 状态码) 或 结果字典
+    """
+    try:
+        # 验证星期参数
+        valid_weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        if weekday not in valid_weekdays:
+            return {
+                'success': False,
+                'message': f'无效的星期参数: {weekday}'
+            }, 400
+        
+        # 验证文件名
+        if not filename.lower().endswith('.txt'):
+            return {
+                'success': False,
+                'message': '只支持txt文件'
+            }, 400
+        
+        # 构建文本文件路径
+        text_path = os.path.join('d:/otherWorkspace/ins-robot/data/toPublish', weekday, filename)
+        
+        if not os.path.exists(text_path):
+            return {
+                'success': False,
+                'message': f'文本文件不存在: {filename}'
+            }, 404
+        
+        # 读取文本内容
+        try:
+            with open(text_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            return {
+                'success': True,
+                'message': '成功获取文本内容',
+                'data': {
+                    'filename': filename,
+                    'content': content,
+                    'size': len(content),
+                    'path': text_path
+                }
+            }
+            
+        except Exception as e:
+            print(f"[读取文本文件] 失败: {str(e)}")
+            return {
+                'success': False,
+                'message': f'读取文本文件失败: {str(e)}'
+            }, 500
+            
+    except Exception as e:
+        print(f"[获取文本内容] 失败: {str(e)}")
+        return {
+            'success': False,
+            'message': f'获取文本内容失败: {str(e)}'
+        }, 500

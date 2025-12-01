@@ -5,7 +5,8 @@ import sys
 from datetime import datetime
 import logging
 from controller.clean import clean_files
-from controller.load import load_to_generate_images, load_to_ps_imgs, load_to_refine_images
+from controller.load import load_to_generate_images, load_to_ps_imgs, load_to_refine_images, get_weekday_images, get_text_content
+from controller.publish import publish_post_api
 from controller.ai import regenerate_image, generate_ai_image
 from controller.ps import watermark_process_logic
 from controller.ai_text import generate_ai_text_api
@@ -79,6 +80,26 @@ def generate_ai_text():
 @app.route('/api/organize-images', methods=['POST'])
 def organize_images():
     return organize_images_api()
+
+@app.route('/api/weekday-images/<weekday>', methods=['GET'])
+def weekday_images_api(weekday):
+    result = get_weekday_images(weekday)
+    if isinstance(result, tuple) and len(result) == 2:
+        data, status_code = result
+        return jsonify(data), status_code
+    return jsonify(result), 200
+
+@app.route('/api/text-content/<weekday>/<filename>', methods=['GET'])
+def text_content_api(weekday, filename):
+    result = get_text_content(weekday, filename)
+    if isinstance(result, tuple) and len(result) == 2:
+        data, status_code = result
+        return jsonify(data), status_code
+    return jsonify(result), 200
+
+@app.route('/api/publish', methods=['POST'])
+def publish_api():
+    return publish_post_api()
 
 
 if __name__ == '__main__':
