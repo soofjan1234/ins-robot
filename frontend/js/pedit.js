@@ -13,6 +13,85 @@ class PEditTool {
         this.watermarkMargin = 20;
         
         this.initializeEventListeners();
+        this.loadPSImages();
+    }
+    
+    /**
+     * 从后端加载toPS目录中的图片
+     */
+    loadPSImages() {
+        console.log('正在加载toPS目录中的图片...');
+        
+        fetch('/api/load-to-ps-imgs')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.data && data.data.images) {
+                    console.log(`成功加载 ${data.data.images.length} 张toPS图片`);
+                    
+                    // 处理加载的图片数据
+                    data.data.images.forEach(imageData => {
+                        // 创建一个File对象模拟
+                        const file = {
+                            name: imageData.filename,
+                            size: imageData.size,
+                            type: this.getMimeTypeFromFilename(imageData.filename)
+                        };
+                        
+                        // 创建一个image对象并添加到上传图片列表
+                        const image = {
+                            id: Date.now() + Math.random(), // 添加id属性，与addImage方法保持一致
+                            file: file,
+                            name: imageData.filename,
+                            size: this.formatFileSize(imageData.size), // 使用formatFileSize方法格式化大小
+                            url: `data:image/${this.getExtensionFromFilename(imageData.filename)};base64,${imageData.data}`,
+                            processed: false,
+                            filename: imageData.filename
+                        };
+                        
+                        this.uploadedImages.push(image);
+                    });
+                    
+                    // 所有图片添加完成后，渲染预览并更新UI状态
+                    if (this.uploadedImages.length > 0) {
+                        this.renderPreview();
+                        this.showPreviewSection();
+                        this.updateUI();
+                    }
+                } else {
+                    console.warn('未加载到toPS图片:', data.message || '未知错误');
+                }
+            })
+            .catch(error => {
+                console.error('加载toPS图片失败:', error);
+            });
+    }
+    
+    /**
+     * 根据文件名获取扩展名
+     */
+    getExtensionFromFilename(filename) {
+        const parts = filename.split('.');
+        return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : 'jpg';
+    }
+    
+    /**
+     * 根据文件名获取MIME类型
+     */
+    getMimeTypeFromFilename(filename) {
+        const extension = this.getExtensionFromFilename(filename);
+        const mimeTypes = {
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'webp': 'image/webp'
+        };
+        return mimeTypes[extension] || 'image/jpeg';
     }
 
     /**
@@ -220,25 +299,7 @@ class PEditTool {
             if (batchProcessedImages.length > 0) {
                 // 如果后端批量处理成功，使用后端结果
                 this.processedImages = batchProcessedImages;
-            } else {
-                // 如果后端处理失败，回退到前端逐个处理
-                for (let i = 0; i < this.uploadedImages.length; i++) {
-                    const image = this.uploadedImages[i];
-                    
-                    try {
-                        const processedImage = await this.processImage(image);
-                        this.processedImages.push(processedImage);
-                        this.updateProgress(i + 1, this.uploadedImages.length);
-                    } catch (error) {
-                        console.error('处理图片失败:', error);
-                        this.processedImages.push({
-                            ...image,
-                            processed: false,
-                            error: '处理失败'
-                        });
-                    }
-                }
-            }
+            } 
         } catch (error) {
             console.error('处理过程失败:', error);
         } finally {
@@ -253,18 +314,42 @@ class PEditTool {
     async batchProcessImages() {
         try {
             // 将所有图片转换为base64格式，同时保留文件名信息
+            // 兼容两种图片来源：1. 正常上传的图片（有真实File对象） 2. 从toPS目录加载的图片（已有base64 url）
             const imagePromises = this.uploadedImages.map(image => {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve({
-                        data: e.target.result,
-                        filename: image.name
+                // 对于已有url（从toPS加载的图片），直接使用url
+                if (image.url && image.url.startsWith('data:image/')) {
+                    return Promise.resolve({
+                        data: image.url,
+                        filename: image.name || image.filename
                     });
-                    reader.readAsDataURL(image.file);
-                });
+                }
+                // 对于正常上传的图片，使用FileReader读取
+                else if (image.file && image.file instanceof Blob) {
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve({
+                            data: e.target.result,
+                            filename: image.name
+                        });
+                        reader.readAsDataURL(image.file);
+                    });
+                }
+                // 处理其他情况
+                else {
+                    console.warn('无法处理的图片数据类型:', image);
+                    return Promise.resolve(null);
+                }
             });
 
-            const imagesWithNames = await Promise.all(imagePromises);
+            // 过滤掉null值
+            const imageResults = await Promise.all(imagePromises);
+            const imagesWithNames = imageResults.filter(item => item !== null);
+            
+            // 如果没有可处理的图片，返回空数组
+            if (imagesWithNames.length === 0) {
+                console.warn('没有找到可处理的图片');
+                return [];
+            }
 
             // 调用后端批量处理API
             const response = await fetch('http://localhost:5000/api/watermark-process', {
@@ -300,69 +385,6 @@ class PEditTool {
             console.error('批量处理失败:', error);
             return [];
         }
-    }
-
-    /**
-     * 处理单张图片（调用后端API）
-     */
-    async processImage(image) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    // 调用后端API进行水印处理，同时发送文件名
-                    const response = await fetch('http://localhost:5000/api/watermark-process', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            images: [{
-                                data: e.target.result,
-                                filename: image.name
-                            }]  // 发送单张图片和文件名
-                        })
-                    });
-
-                    const result = await response.json();
-                    
-                    if (result.success && result.data.processed_images.length > 0) {
-                        const processedImage = result.data.processed_images[0];
-                        resolve({
-                            ...image,
-                            processed: true,
-                            processedUrl: processedImage.data,
-                            settings: {
-                                position: this.watermarkPosition,
-                                size: this.watermarkSize,
-                                opacity: this.watermarkOpacity,
-                                margin: this.watermarkMargin
-                            }
-                        });
-                    } else {
-                        throw new Error(result.message || '处理失败');
-                    }
-                } catch (error) {
-                    console.error('后端处理失败:', error);
-                    // 如果后端处理失败，使用前端模拟处理
-                    setTimeout(() => {
-                        resolve({
-                            ...image,
-                            processed: true,
-                            processedUrl: image.url,
-                            settings: {
-                                position: this.watermarkPosition,
-                                size: this.watermarkSize,
-                                opacity: this.watermarkOpacity,
-                                margin: this.watermarkMargin
-                            }
-                        });
-                    }, 1000 + Math.random() * 2000);
-                }
-            };
-            reader.onerror = () => reject(new Error('读取文件失败'));
-            reader.readAsDataURL(image.file);
-        });
     }
 
     /**

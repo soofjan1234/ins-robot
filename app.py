@@ -5,8 +5,9 @@ import sys
 from datetime import datetime
 import logging
 from controller.clean import clean_files
-from controller.load import load_to_generate_images
-from controller.ps import regenerate_image, generate_ai_image, request, jsonify
+from controller.load import load_to_generate_images, load_to_ps_imgs
+from controller.ai import regenerate_image, generate_ai_image
+from controller.ps import watermark_process_logic
 
 app = Flask(__name__)
 CORS(app)
@@ -39,6 +40,14 @@ def load_to_generate_imgs_api():
         return jsonify(data), status_code
     return jsonify(result), 200
 
+@app.route('/api/load-to-ps-imgs', methods=['GET'])
+def load_to_ps_imgs_api():
+    result = load_to_ps_imgs()
+    if isinstance(result, tuple) and len(result) == 2:
+        data, status_code = result
+        return jsonify(data), status_code
+    return jsonify(result), 200
+
 # 图片重新生成接口
 @app.route('/api/regenerate', methods=['POST'])
 def regenerate():
@@ -48,6 +57,11 @@ def regenerate():
 @app.route('/api/ai-generate', methods=['POST'])
 def generate_ai():
     return generate_ai_image()
+
+@app.route('/api/watermark-process', methods=['POST'])
+def watermark_process():
+    return watermark_process_logic()
+
 
 if __name__ == '__main__':
     print("Starting Instagram Robot Service...")
